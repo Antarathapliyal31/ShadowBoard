@@ -380,15 +380,43 @@ def run_moderator(question, all_context):
     moderator_task = Task(
         description=f"""You are the Board Moderator. Synthesize the ENTIRE debate on: {question}
         
-        Produce a Strategy Brief with these sections:
-        1. EXECUTIVE SUMMARY (2-3 sentences)
-        2. BOARD SENTIMENT (X for GO, Y for NO-GO, Z for CONDITIONAL)
-        3. CONSENSUS POINTS (what all agents agreed on)
-        4. KEY DISAGREEMENTS (where agents differed and why)
-        5. RISK MATRIX (risk | severity HIGH/MED/LOW | flagged by which agent)
-        6. RECOMMENDATION (your balanced recommendation with trade-offs)
-        
-        Keep under 300 words. Be neutral. Do not take sides.""",
+        You MUST produce a Strategy Brief using EXACTLY this format. Do not skip any section.
+
+        ## EXECUTIVE SUMMARY
+        (Exactly 2 sentences summarizing the debate outcome)
+
+        ## BOARD VOTE
+        - CFO: [GO/NO-GO/CONDITIONAL]
+        - CMO: [GO/NO-GO/CONDITIONAL]
+        - Legal Counsel: [GO/NO-GO/CONDITIONAL]
+        - Devil's Advocate: [GO/NO-GO/CONDITIONAL]
+        - Overall: X for GO, Y for NO-GO, Z for CONDITIONAL
+
+        ## CONSENSUS POINTS
+        - (What all agents agreed on, bullet points)
+
+        ## KEY DISAGREEMENTS
+        - (Where agents differed, name the agents and their positions)
+
+        ## RISK MATRIX
+        | Risk | Severity | Probability | Flagged By |
+        |------|----------|-------------|------------|
+        | (risk 1) | HIGH/MED/LOW | HIGH/MED/LOW | (agent name) |
+        | (risk 2) | HIGH/MED/LOW | HIGH/MED/LOW | (agent name) |
+        | (risk 3) | HIGH/MED/LOW | HIGH/MED/LOW | (agent name) |
+
+        ## OPTIONS & TRADE-OFFS
+        **Option A:** (describe) → Pros: ... | Cons: ...
+        **Option B:** (describe) → Pros: ... | Cons: ...
+        **Option C:** (describe) → Pros: ... | Cons: ...
+
+        ## RECOMMENDED NEXT STEPS
+        1. (Immediate action regardless of decision)
+        2. (Second step)
+        3. (Third step)
+
+        Be neutral. Do not take sides. Base everything on what agents actually said in the debate.
+        Keep under 400 words.""",
         agent=moderator_agent,
         context=all_context,
         expected_output="A structured strategy brief synthesizing the entire debate"

@@ -61,6 +61,7 @@ def agents_research(session_id: str):
 
     def generate():
         # ═══ PHASE 1: RESEARCH (one agent at a time) ═══
+        yield "retry: 120000\n\n"    
         yield sse_event("phase", {"phase": "research"})
 
         yield sse_event("agent_start", {"agent": "CFO", "action": "researching financial data"})

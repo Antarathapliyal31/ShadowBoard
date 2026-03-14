@@ -1,7 +1,36 @@
 from fpdf import FPDF
 from datetime import datetime
 
+def clean_text(text):
+    """Remove Unicode characters that fpdf can't handle"""
+    replacements = {
+        '→': '->',
+        '←': '<-',
+        '✅': '[OK]',
+        '❌': '[X]',
+        '⚖️': '',
+        '📊': '',
+        '📈': '',
+        '😈': '',
+        '🏛️': '',
+        '•': '-',
+        '–': '-',
+        '—': '-',
+        '"': '"',
+        '"': '"',
+        ''': "'",
+        ''': "'",
+        '…': '...',
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    # Remove any remaining non-latin characters
+    text = text.encode('latin-1', errors='replace').decode('latin-1')
+    return text
+
 def generate_strategy_brief_pdf(question, moderator_text, session_id):
+    question = clean_text(question)
+    moderator_text = clean_text(moderator_text)
     pdf = FPDF()
     pdf.add_page()
     
