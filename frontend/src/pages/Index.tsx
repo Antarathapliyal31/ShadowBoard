@@ -26,6 +26,7 @@ const EXAMPLE_QUESTIONS = [
 const Index = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [question, setQuestion] = useState('');
+  const [context, setContext] = useState(''); 
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -106,7 +107,7 @@ const Index = () => {
       const res = await fetch(`${API_BASE}/api/session/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question,  context}),
       });
       const data = await res.json();
       setSessionId(data.session);
@@ -176,6 +177,15 @@ const Index = () => {
                 placeholder="What strategic decision should the board analyze?"
                 className="w-full bg-secondary/40 border border-border rounded-lg p-4 text-sm md:text-base text-foreground focus:outline-none focus:border-primary/40 transition-colors resize-none h-32 placeholder:text-muted-foreground/50"
               />
+
+              <textarea
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
+                placeholder="Company context (optional): e.g. We are Spotify. Revenue: $15B. Cash: $4.2B. 500M monthly active users."
+                className="w-full bg-secondary/40 border border-border rounded-lg p-4 text-sm md:text-base text-foreground focus:outline-none focus:border-primary/40 transition-colors resize-none h-20 placeholder:text-muted-foreground/50 mt-3"
+              />
+
+              {/* Example chips */}
 
               {/* Example chips */}
               <div className="flex flex-wrap gap-2 mt-4 mb-6">
