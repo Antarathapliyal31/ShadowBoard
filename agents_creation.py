@@ -61,10 +61,10 @@ moderator_agent = Agent(
 
 
 # ═══════════════════════════════════════════════
-# PHASE 1: RESEARCH
+# PHASE 1: RESEARCH — Individual agent functions
 # ═══════════════════════════════════════════════
 
-def run_research(question):
+def run_research_cfo(question):
     task_cfo = Task(
         description=f"""As the CFO, analyze this strategic question from a FINANCIAL perspective:
         
@@ -81,7 +81,12 @@ def run_research(question):
         agent=CFO_agent,
         expected_output="Financial analysis with specific numbers and a clear recommendation"
     )
+    crew = Crew(agents=[CFO_agent], tasks=[task_cfo], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return task_cfo
 
+
+def run_research_cmo(question):
     task_cmo = Task(
         description=f"""As a CMO, analyze this strategic question from a MARKETING perspective:
         
@@ -98,7 +103,12 @@ def run_research(question):
         agent=CMO_agent,
         expected_output="Marketing analysis with specific numbers and a clear recommendation"
     )
+    crew = Crew(agents=[CMO_agent], tasks=[task_cmo], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return task_cmo
 
+
+def run_research_legal(question):
     task_legal = Task(
         description=f"""As a Legal expert, analyze this strategic question from a LEGAL perspective:
         
@@ -115,31 +125,16 @@ def run_research(question):
         agent=Legal_agent,
         expected_output="Legal analysis with specific numbers and a clear recommendation"
     )
-
-    crew = Crew(
-        agents=[CFO_agent, CMO_agent, Legal_agent],
-        tasks=[task_cfo, task_cmo, task_legal],
-        process=Process.sequential, verbose=True
-    )
-    result = crew.kickoff()
-
-    return {
-        "result": result,
-        "task_cfo": task_cfo,
-        "task_cmo": task_cmo,
-        "task_legal": task_legal
-    }
+    crew = Crew(agents=[Legal_agent], tasks=[task_legal], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return task_legal
 
 
 # ═══════════════════════════════════════════════
-# PHASE 2: DEBATE ROUND 1
+# PHASE 2: DEBATE ROUND 1 — Individual agent functions
 # ═══════════════════════════════════════════════
 
-def run_debate_round1(question, research_tasks):
-    task_cfo = research_tasks["task_cfo"]
-    task_cmo = research_tasks["task_cmo"]
-    task_legal = research_tasks["task_legal"]
-
+def run_debate1_cfo(question, task_cfo, task_cmo, task_legal):
     debate_cfo = Task(
         description=f"""ROUND 1 — OPENING STATEMENT. You are the CFO.
         Read all research outputs and state your position on: {question}
@@ -153,7 +148,12 @@ def run_debate_round1(question, research_tasks):
         context=[task_cfo, task_cmo, task_legal],
         expected_output="CFO's opening position with financial arguments"
     )
+    crew = Crew(agents=[CFO_agent], tasks=[debate_cfo], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_cfo
 
+
+def run_debate1_cmo(question, task_cfo, task_cmo, task_legal, debate_cfo):
     debate_cmo = Task(
         description=f"""ROUND 1 — OPENING STATEMENT. You are the CMO.
         Read all research outputs and the CFO's statement. State your position on: {question}
@@ -167,7 +167,12 @@ def run_debate_round1(question, research_tasks):
         context=[task_cfo, task_cmo, task_legal, debate_cfo],
         expected_output="CMO's opening position with market arguments"
     )
+    crew = Crew(agents=[CMO_agent], tasks=[debate_cmo], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_cmo
 
+
+def run_debate1_legal(question, task_cfo, task_cmo, task_legal, debate_cfo, debate_cmo):
     debate_legal = Task(
         description=f"""ROUND 1 — OPENING STATEMENT. You are the Legal Counsel.
         Read all research and CFO + CMO statements. State your position on: {question}
@@ -181,7 +186,12 @@ def run_debate_round1(question, research_tasks):
         context=[task_cfo, task_cmo, task_legal, debate_cfo, debate_cmo],
         expected_output="Legal Counsel's opening position with legal arguments"
     )
+    crew = Crew(agents=[Legal_agent], tasks=[debate_legal], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_legal
 
+
+def run_debate1_da(question, task_cfo, task_cmo, task_legal, debate_cfo, debate_cmo, debate_legal):
     debate_da = Task(
         description=f"""ROUND 1 — OPENING STATEMENT. You are the Devil's Advocate.
         Read ALL research and ALL debate statements. Now challenge everyone on: {question}
@@ -196,39 +206,19 @@ def run_debate_round1(question, research_tasks):
         context=[task_cfo, task_cmo, task_legal, debate_cfo, debate_cmo, debate_legal],
         expected_output="Devil's Advocate challenge with specific counter-arguments"
     )
-
-    crew = Crew(
-        agents=[CFO_agent, CMO_agent, Legal_agent, Devils_Advocate_agent],
-        tasks=[debate_cfo, debate_cmo, debate_legal, debate_da],
-        process=Process.sequential, verbose=True
-    )
-    result = crew.kickoff()
-
-    return {
-        "result": result,
-        "debate_cfo": debate_cfo,
-        "debate_cmo": debate_cmo,
-        "debate_legal": debate_legal,
-        "debate_da": debate_da
-    }
+    crew = Crew(agents=[Devils_Advocate_agent], tasks=[debate_da], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_da
 
 
 # ═══════════════════════════════════════════════
-# PHASE 2: DEBATE ROUND 2 (REBUTTAL + HITL)
+# PHASE 2: DEBATE ROUND 2 — Individual agent functions
 # ═══════════════════════════════════════════════
 
-def run_debate_round2(question, round1_tasks, human_input=""):
-    debate_cfo = round1_tasks["debate_cfo"]
-    debate_cmo = round1_tasks["debate_cmo"]
-    debate_legal = round1_tasks["debate_legal"]
-    debate_da = round1_tasks["debate_da"]
-
+def run_debate2_cfo(question, debate_cfo, debate_cmo, debate_legal, debate_da, human_input=""):
     human_section = ""
     if human_input.strip():
-        human_section = f"""
-        
-        The human decision-maker has asked: '{human_input}'
-        You MUST address this question in your response."""
+        human_section = f"\n\nThe human decision-maker has asked: '{human_input}'\nYou MUST address this question in your response."
 
     debate_cfo_2 = Task(
         description=f"""ROUND 2 — REBUTTAL. You are the CFO.
@@ -243,6 +233,15 @@ def run_debate_round2(question, round1_tasks, human_input=""):
         context=[debate_cfo, debate_cmo, debate_legal, debate_da],
         expected_output="A rebuttal addressing other agents' specific points with financial counter-arguments"
     )
+    crew = Crew(agents=[CFO_agent], tasks=[debate_cfo_2], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_cfo_2
+
+
+def run_debate2_cmo(question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, human_input=""):
+    human_section = ""
+    if human_input.strip():
+        human_section = f"\n\nThe human decision-maker has asked: '{human_input}'\nYou MUST address this question in your response."
 
     debate_cmo_2 = Task(
         description=f"""ROUND 2 — REBUTTAL. You are the CMO.
@@ -257,6 +256,15 @@ def run_debate_round2(question, round1_tasks, human_input=""):
         context=[debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2],
         expected_output="A rebuttal addressing other agents' specific points with market counter-arguments"
     )
+    crew = Crew(agents=[CMO_agent], tasks=[debate_cmo_2], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_cmo_2
+
+
+def run_debate2_legal(question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2, human_input=""):
+    human_section = ""
+    if human_input.strip():
+        human_section = f"\n\nThe human decision-maker has asked: '{human_input}'\nYou MUST address this question in your response."
 
     debate_legal_2 = Task(
         description=f"""ROUND 2 — REBUTTAL. You are the Legal Counsel.
@@ -271,6 +279,15 @@ def run_debate_round2(question, round1_tasks, human_input=""):
         context=[debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2],
         expected_output="A rebuttal addressing other agents' specific points with legal counter-arguments"
     )
+    crew = Crew(agents=[Legal_agent], tasks=[debate_legal_2], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_legal_2
+
+
+def run_debate2_da(question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2, debate_legal_2, human_input=""):
+    human_section = ""
+    if human_input.strip():
+        human_section = f"\n\nThe human decision-maker has asked: '{human_input}'\nYou MUST address this question in your response."
 
     debate_da_2 = Task(
         description=f"""ROUND 2 — REBUTTAL. You are the Devil's Advocate.
@@ -286,35 +303,16 @@ def run_debate_round2(question, round1_tasks, human_input=""):
                  debate_cfo_2, debate_cmo_2, debate_legal_2],
         expected_output="A sharp rebuttal challenging the weakest surviving arguments"
     )
-
-    crew = Crew(
-        agents=[CFO_agent, CMO_agent, Legal_agent, Devils_Advocate_agent],
-        tasks=[debate_cfo_2, debate_cmo_2, debate_legal_2, debate_da_2],
-        process=Process.sequential, verbose=True
-    )
-    result = crew.kickoff()
-
-    return {
-        "result": result,
-        "debate_cfo_2": debate_cfo_2,
-        "debate_cmo_2": debate_cmo_2,
-        "debate_legal_2": debate_legal_2,
-        "debate_da_2": debate_da_2
-    }
+    crew = Crew(agents=[Devils_Advocate_agent], tasks=[debate_da_2], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_da_2
 
 
 # ═══════════════════════════════════════════════
-# PHASE 2: DEBATE ROUND 3 (FINAL POSITIONS)
+# PHASE 2: DEBATE ROUND 3 — Individual agent functions
 # ═══════════════════════════════════════════════
 
-def run_debate_round3(question, round1_tasks, round2_tasks):
-    all_context = [
-        round1_tasks["debate_cfo"], round1_tasks["debate_cmo"],
-        round1_tasks["debate_legal"], round1_tasks["debate_da"],
-        round2_tasks["debate_cfo_2"], round2_tasks["debate_cmo_2"],
-        round2_tasks["debate_legal_2"], round2_tasks["debate_da_2"]
-    ]
-
+def run_debate3_cfo(question, all_context):
     debate_cfo_3 = Task(
         description=f"""FINAL ROUND. You are the CFO. One paragraph only.
         State: GO / NO-GO / CONDITIONAL on: {question}
@@ -324,67 +322,61 @@ def run_debate_round3(question, round1_tasks, round2_tasks):
         context=all_context,
         expected_output="Final CFO position: GO/NO-GO/CONDITIONAL with one reason and one risk"
     )
+    crew = Crew(agents=[CFO_agent], tasks=[debate_cfo_3], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_cfo_3
 
+
+def run_debate3_cmo(question, all_context):
     debate_cmo_3 = Task(
         description=f"""FINAL ROUND. You are the CMO. One paragraph only.
         State: GO / NO-GO / CONDITIONAL on: {question}
         Your single strongest market argument. Quote specific numbers.
         One market risk that must be monitored.""",
         agent=CMO_agent,
-        context=all_context + [debate_cfo_3],
+        context=all_context,
         expected_output="Final CMO position: GO/NO-GO/CONDITIONAL with one reason and one risk"
     )
+    crew = Crew(agents=[CMO_agent], tasks=[debate_cmo_3], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_cmo_3
 
+
+def run_debate3_legal(question, all_context):
     debate_legal_3 = Task(
         description=f"""FINAL ROUND. You are the Legal Counsel. One paragraph only.
         State: GO / NO-GO / CONDITIONAL on: {question}
         Your single strongest legal argument. Quote specific numbers.
         One legal risk that must be monitored.""",
         agent=Legal_agent,
-        context=all_context + [debate_cfo_3, debate_cmo_3],
+        context=all_context,
         expected_output="Final Legal position: GO/NO-GO/CONDITIONAL with one reason and one risk"
     )
+    crew = Crew(agents=[Legal_agent], tasks=[debate_legal_3], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_legal_3
 
+
+def run_debate3_da(question, all_context):
     debate_da_3 = Task(
         description=f"""FINAL ROUND. You are the Devil's Advocate. One paragraph only.
         State: GO / NO-GO / CONDITIONAL on: {question}
         Your single strongest challenge. Quote specific numbers.
         The one risk everyone else is underestimating.""",
         agent=Devils_Advocate_agent,
-        context=all_context + [debate_cfo_3, debate_cmo_3, debate_legal_3],
+        context=all_context,
         expected_output="Final Devil's Advocate position with the strongest remaining challenge"
     )
-
-    crew = Crew(
-        agents=[CFO_agent, CMO_agent, Legal_agent, Devils_Advocate_agent],
-        tasks=[debate_cfo_3, debate_cmo_3, debate_legal_3, debate_da_3],
-        process=Process.sequential, verbose=True
-    )
-    result = crew.kickoff()
-
-    return {
-        "result": result,
-        "debate_cfo_3": debate_cfo_3,
-        "debate_cmo_3": debate_cmo_3,
-        "debate_legal_3": debate_legal_3,
-        "debate_da_3": debate_da_3
-    }
+    crew = Crew(agents=[Devils_Advocate_agent], tasks=[debate_da_3], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return debate_da_3
 
 
 # ═══════════════════════════════════════════════
 # PHASE 3: MODERATOR SYNTHESIS
 # ═══════════════════════════════════════════════
 
-def run_moderator(question, round1_tasks, round2_tasks, round3_tasks):
-    all_context = [
-        round1_tasks["debate_cfo"], round1_tasks["debate_cmo"],
-        round1_tasks["debate_legal"], round1_tasks["debate_da"],
-        round2_tasks["debate_cfo_2"], round2_tasks["debate_cmo_2"],
-        round2_tasks["debate_legal_2"], round2_tasks["debate_da_2"],
-        round3_tasks["debate_cfo_3"], round3_tasks["debate_cmo_3"],
-        round3_tasks["debate_legal_3"], round3_tasks["debate_da_3"]
-    ]
-
+def run_moderator(question, all_context):
     moderator_task = Task(
         description=f"""You are the Board Moderator. Synthesize the ENTIRE debate on: {question}
         
@@ -401,15 +393,9 @@ def run_moderator(question, round1_tasks, round2_tasks, round3_tasks):
         context=all_context,
         expected_output="A structured strategy brief synthesizing the entire debate"
     )
-
-    crew = Crew(
-        agents=[moderator_agent],
-        tasks=[moderator_task],
-        process=Process.sequential, verbose=True
-    )
-    result = crew.kickoff()
-
-    return {"result": result}
+    crew = Crew(agents=[moderator_agent], tasks=[moderator_task], process=Process.sequential, verbose=True)
+    crew.kickoff()
+    return moderator_task
 
 
 # ═══════════════════════════════════════════════
@@ -421,27 +407,58 @@ if __name__ == "__main__":
 
     print("\n🔬 PHASE 1: RESEARCH")
     print("=" * 60)
-    research = run_research(question)
+    task_cfo = run_research_cfo(question)
+    print("✅ CFO research done")
+    task_cmo = run_research_cmo(question)
+    print("✅ CMO research done")
+    task_legal = run_research_legal(question)
+    print("✅ Legal research done")
 
-    print("\n PHASE 2: DEBATE — ROUND 1")
+    print("\n🏛️ PHASE 2: DEBATE — ROUND 1")
     print("=" * 60)
-    round1 = run_debate_round1(question, research)
+    debate_cfo = run_debate1_cfo(question, task_cfo, task_cmo, task_legal)
+    print("✅ CFO Round 1 done")
+    debate_cmo = run_debate1_cmo(question, task_cfo, task_cmo, task_legal, debate_cfo)
+    print("✅ CMO Round 1 done")
+    debate_legal = run_debate1_legal(question, task_cfo, task_cmo, task_legal, debate_cfo, debate_cmo)
+    print("✅ Legal Round 1 done")
+    debate_da = run_debate1_da(question, task_cfo, task_cmo, task_legal, debate_cfo, debate_cmo, debate_legal)
+    print("✅ Devil's Advocate Round 1 done")
 
     human_input = input("\n💬 Ask the board a question (or press Enter to skip): ")
 
-    print("\n PHASE 2: DEBATE — ROUND 2 (REBUTTAL)")
+    print("\n🏛️ PHASE 2: DEBATE — ROUND 2 (REBUTTAL)")
     print("=" * 60)
-    round2 = run_debate_round2(question, round1, human_input)
+    debate_cfo_2 = run_debate2_cfo(question, debate_cfo, debate_cmo, debate_legal, debate_da, human_input)
+    print("✅ CFO Round 2 done")
+    debate_cmo_2 = run_debate2_cmo(question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, human_input)
+    print("✅ CMO Round 2 done")
+    debate_legal_2 = run_debate2_legal(question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2, human_input)
+    print("✅ Legal Round 2 done")
+    debate_da_2 = run_debate2_da(question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2, debate_legal_2, human_input)
+    print("✅ Devil's Advocate Round 2 done")
 
-    print("\n PHASE 2: DEBATE — ROUND 3 (FINAL POSITIONS)")
+    print("\n🏛️ PHASE 2: DEBATE — ROUND 3 (FINAL POSITIONS)")
     print("=" * 60)
-    round3 = run_debate_round3(question, round1, round2)
+    all_context_r3 = [debate_cfo, debate_cmo, debate_legal, debate_da,
+                      debate_cfo_2, debate_cmo_2, debate_legal_2, debate_da_2]
+    debate_cfo_3 = run_debate3_cfo(question, all_context_r3)
+    print("✅ CFO Round 3 done")
+    debate_cmo_3 = run_debate3_cmo(question, all_context_r3 + [debate_cfo_3])
+    print("✅ CMO Round 3 done")
+    debate_legal_3 = run_debate3_legal(question, all_context_r3 + [debate_cfo_3, debate_cmo_3])
+    print("✅ Legal Round 3 done")
+    debate_da_3 = run_debate3_da(question, all_context_r3 + [debate_cfo_3, debate_cmo_3, debate_legal_3])
+    print("✅ Devil's Advocate Round 3 done")
 
-    print("\n PHASE 3: MODERATOR SYNTHESIS")
+    print("\n📋 PHASE 3: MODERATOR SYNTHESIS")
     print("=" * 60)
-    final = run_moderator(question, round1, round2, round3)
-
+    all_context_mod = [debate_cfo, debate_cmo, debate_legal, debate_da,
+                       debate_cfo_2, debate_cmo_2, debate_legal_2, debate_da_2,
+                       debate_cfo_3, debate_cmo_3, debate_legal_3, debate_da_3]
+    moderator_task = run_moderator(question, all_context_mod)
+    
     print("\n" + "=" * 60)
-    print("SHADOW BOARD — FINAL STRATEGY BRIEF")
+    print("🏛️ SHADOW BOARD — FINAL STRATEGY BRIEF")
     print("=" * 60)
-    print(final["result"])
+    print(moderator_task.output.raw)
