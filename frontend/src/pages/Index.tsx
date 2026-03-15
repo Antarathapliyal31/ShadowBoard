@@ -64,12 +64,19 @@ const Index = () => {
     es.addEventListener('phase', (e) => {
       try {
         const data = JSON.parse(e.data);
-        if (data.phase && PHASE_MAP[data.phase] !== undefined) {
-          setCurrentPhase(PHASE_MAP[data.phase]);
+        
+        if (data.phase === 'research') {
+            setCurrentPhase(0);
+        } else if (data.phase === 'debate' && data.round === 1) {
+            setCurrentPhase(1);
+        } else if (data.phase === 'debate' && data.round === 2) {
+            setCurrentPhase(3);
+        } else if (data.phase === 'debate' && data.round === 3) {
+            setCurrentPhase(4);
+        } else if (data.phase === 'synthesis') {
+            setCurrentPhase(5);
         }
-        if (data.round) {
-          setCurrentPhase(data.round);
-        }
+        
         setIsThinking(true);
       } catch { /* ignore */ }
     });
