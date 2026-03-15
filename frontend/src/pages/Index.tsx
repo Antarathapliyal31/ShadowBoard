@@ -328,18 +328,19 @@ const Index = () => {
               </div>
               <button
                 onClick={() => {
-                    setSessionId(null);
-                    setMessages([]);
-                    setCurrentPhase(0);
-                    setIsPaused(false);
-                    setIsComplete(false);
-                    setIsStarting(false);
-                    setIsThinking(false);
-                    setQuestion('');
-                    setContext('');
-                    setError(null);
-                    eventSourceRef.current?.close();
-                }}
+                setSessionId(null);
+                setMessages([]);
+                setCurrentPhase(0);
+                setIsPaused(false);
+                setIsComplete(false);
+                setIsStarting(false);
+                setIsThinking(false);
+                setQuestion('');
+                setContext('');
+                setUploadedFile(null);    
+                setError(null);
+                eventSourceRef.current?.close();
+            }}
               className="mt-6 px-6 py-3 rounded-lg border border-primary/30 text-primary font-semibold uppercase tracking-wider text-sm hover:bg-primary/10 transition-all">
             Start New Session
             </button>
