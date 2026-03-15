@@ -8,9 +8,7 @@ interface TypingIndicatorProps {
 
 const TypingIndicator: React.FC<TypingIndicatorProps> = ({ agentName, phase }) => {
   const statusText = agentName
-    ? phase === 'research'
-      ? `🔍 ${agentName} is researching...`
-      : `💬 ${agentName} is formulating response...`
+    ? `🔍 ${agentName}`
     : 'Agents are deliberating...';
 
   return (

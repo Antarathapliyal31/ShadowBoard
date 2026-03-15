@@ -34,6 +34,7 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [thinkingAgent, setThinkingAgent] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -69,12 +70,20 @@ const Index = () => {
         setIsThinking(true);
       } catch { /* ignore */ }
     });
+    es.addEventListener('agent_start', (e) => {
+    try {
+        const data = JSON.parse(e.data);
+        setThinkingAgent(`${data.agent} is ${data.action}...`);
+        setIsThinking(true);
+    } catch { /* ignore */ }
+});
 
     es.addEventListener('agent_message', (e) => {
       try {
         const data = JSON.parse(e.data) as AgentMessage;
         setMessages((prev) => [...prev, data]);
         setIsThinking(false);
+        setThinkingAgent(null);
         // Brief pause then show thinking again for next message
         setTimeout(() => setIsThinking(true), 800);
       } catch { /* ignore */ }
@@ -233,7 +242,7 @@ const Index = () => {
         <AnimatePresence>
           {isThinking && !isPaused && !isComplete && (
             <TypingIndicator
-              agentName={messages.length > 0 ? undefined : undefined}
+              agentName={thinkingAgent}
               phase={currentPhase === 0 ? 'research' : 'debate'}
             />
           )}
