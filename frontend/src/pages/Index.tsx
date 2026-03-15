@@ -38,6 +38,8 @@ const Index = () => {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -116,10 +118,21 @@ const Index = () => {
       const res = await fetch(`${API_BASE}/api/session/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question,  context}),
+        body: JSON.stringify({ question, context }),
       });
       const data = await res.json();
       setSessionId(data.session);
+
+      // Upload file if one was selected
+      if (uploadedFile) {
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+        await fetch(`${API_BASE}/api/${data.session}/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+      }
+
       initSSE(data.session);
     } catch {
       setError('Failed to initialize session. Ensure backend is running.');
@@ -193,7 +206,32 @@ const Index = () => {
                 placeholder="Company context (optional): e.g. We are Spotify. Revenue: $15B. Cash: $4.2B. 500M monthly active users."
                 className="w-full bg-secondary/40 border border-border rounded-lg p-4 text-sm md:text-base text-foreground focus:outline-none focus:border-primary/40 transition-colors resize-none h-20 placeholder:text-muted-foreground/50 mt-3"
               />
-
+              <div className="flex items-center gap-2 mt-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(e) => {
+                  if (e.target.files?.[0]) setUploadedFile(e.target.files[0]);
+                }}
+                accept=".pdf,.txt,.docx"
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-all text-xs"
+              >
+                <FileText size={14} />
+                {uploadedFile ? uploadedFile.name : 'Attach document (optional)'}
+              </button>
+              {uploadedFile && (
+                <button
+                  onClick={() => setUploadedFile(null)}
+                  className="text-xs text-destructive hover:text-destructive/80"
+                >
+                  ✕ Remove
+                </button>
+              )}
+            </div>
               {/* Example chips */}
 
               {/* Example chips */}

@@ -10,6 +10,9 @@ import time
 from fastapi.middleware.cors import CORSMiddleware
 from slack_notify import send_slack_notification
 from agents_creation import parse_vote
+import fitz
+import docx
+import io
 
 
 from agents_creation import (
@@ -55,12 +58,40 @@ def download_pdf(session_id):
     filepath=f"reports/strategy_brief_{session_id}.pdf"
     return FileResponse(filepath,filename="Shadow_Board_Strategy_Brief.pdf")
 
+from fastapi import UploadFile, File
+
+@app.post("/api/{session_id}/upload")
+async def upload_file(session_id: str, file: UploadFile = File(...)):
+    content = await file.read()
+    filename = file.filename.lower()
+    
+    if filename.endswith('.txt'):
+        text = content.decode('utf-8')
+    elif filename.endswith('.pdf'):
+        doc = fitz.open(stream=content, filetype="pdf")
+        text = ""
+        for page in doc:
+            text += page.get_text()
+    elif filename.endswith('.docx'):
+        doc = docx.Document(io.BytesIO(content))
+        text = "\n".join([p.text for p in doc.paragraphs])
+    else:
+        text = ""
+    
+    #Store in session
+    sessions_info[session_id]["file_context"] = text
+    return {"status": "uploaded", "characters": len(text)}
+
 @app.get("/api/{session_id}/agents_research")
 def agents_research(session_id: str):
     session = sessions_info[session_id]
     question = session["question"]
     context=session.get("context", "")
-    full_question=f"{question}\n\n Comapny Context:{context}" if context else question
+    file_context = session.get("file_context", "")
+    if file_context:
+        full_question = f"{question}\n\nCOMPANY CONTEXT: {context}\n\nUPLOADED DOCUMENT:\n{file_context[:3000]}"
+    else:
+        full_question = f"{question}\n\nCOMPANY CONTEXT: {context}" if context else question
 
     def generate():
         # ═══ PHASE 1: RESEARCH (one agent at a time) ═══
