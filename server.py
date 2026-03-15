@@ -13,6 +13,7 @@ from agents_creation import parse_vote
 import fitz
 import docx
 import io
+from fastapi import UploadFile, File
 from agents_creation import set_board_expertise
 
 
@@ -61,7 +62,6 @@ def download_pdf(session_id):
     filepath=f"reports/strategy_brief_{session_id}.pdf"
     return FileResponse(filepath,filename="Shadow_Board_Strategy_Brief.pdf")
 
-from fastapi import UploadFile, File
 
 @app.post("/api/{session_id}/upload")
 async def upload_file(session_id: str, file: UploadFile = File(...)):
@@ -161,6 +161,7 @@ def agents_research(session_id: str):
             da_input = direct if target_agent == "Devils Advocate" else observe
 
         # ═══ PHASE 2: DEBATE ROUND 2 (one agent at a time) ═══
+        yield sse_event("resume", {"message": "Debate continuing"})
         yield sse_event("phase", {"phase": "debate", "round": 2})
 
         yield sse_event("agent_start", {"agent": "CFO", "action": "preparing rebuttal"})

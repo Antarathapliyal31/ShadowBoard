@@ -105,6 +105,11 @@ const Index = () => {
       setCurrentPhase(2); // HITL phase
     });
 
+    es.addEventListener('resume', () => {
+    setIsPaused(false);
+    setIsThinking(true);
+    });
+
     es.addEventListener('complete', () => {
       setIsComplete(true);
       setIsThinking(false);
