@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export interface AgentMessage {
   agent: string;
@@ -70,7 +71,7 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, index, sessionId }) 
             </div>
           </div>
           <div className="text-foreground/90 text-sm md:text-base leading-relaxed prose prose-invert prose-sm max-w-none">
-            <ReactMarkdown>{message.text}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
           </div>
           <button 
           onClick={() => {
@@ -118,7 +119,7 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, index, sessionId }) 
         </div>
       </div>
       <div className="text-sm md:text-[15px] leading-relaxed text-foreground/80 prose prose-invert prose-sm max-w-none">
-        <ReactMarkdown>{message.text}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
       </div>
     </motion.div>
   );

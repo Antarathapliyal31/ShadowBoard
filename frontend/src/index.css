@@ -164,3 +164,30 @@
   background: hsla(40, 52%, 58%, 0.3);
   color: white;
 }
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+}
+
+.prose th {
+  background: hsla(40, 52%, 58%, 0.1);
+  border: 1px solid hsla(40, 52%, 58%, 0.2);
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.prose td {
+  border: 1px solid hsla(40, 52%, 58%, 0.15);
+  padding: 8px 12px;
+}
+
+.prose tr:hover {
+  background: hsla(40, 52%, 58%, 0.05);
+}
