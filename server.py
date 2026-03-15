@@ -8,6 +8,9 @@ import json
 from fastapi.responses import StreamingResponse
 import time
 from fastapi.middleware.cors import CORSMiddleware
+from slack_notify import send_slack_notification
+from agents_creation import parse_vote
+
 
 from agents_creation import (
     run_research_cfo, run_research_cmo, run_research_legal,
@@ -161,6 +164,15 @@ def agents_research(session_id: str):
         moderator_txt=moderator_task.output.raw
         filepath=generate_strategy_brief_pdf(full_question,moderator_txt,session_id)
         yield sse_event("brief_ready", {"download_url": f"/api/{session_id}/download_pdf"})
+
+        votes = {
+            "CFO": parse_vote(debate_cfo_3),
+            "CMO": parse_vote(debate_cmo_3),
+            "Legal": parse_vote(debate_legal_3),
+            "Devils Advocate": parse_vote(debate_da_3)
+        }
+        send_slack_notification(question, votes, moderator_task.output.raw)
+
 
         yield sse_event("complete", {"message": "Shadow Board session complete"})
 

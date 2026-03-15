@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import os
 
+
 # ═══════════════════════════════════════════════
 # SETUP — runs once when this file is imported
 # ═══════════════════════════════════════════════
@@ -59,7 +60,15 @@ moderator_agent = Agent(
     llm=gemini, verbose=True
 )
 
-
+def parse_vote(task):
+    text = task.output.raw.upper()
+    if "NO-GO" in text or "NO GO" in text:
+        return "NO-GO"
+    elif "CONDITIONAL" in text:
+        return "CONDITIONAL"
+    elif "GO" in text:
+        return "GO"
+    return "UNDECIDED"
 # ═══════════════════════════════════════════════
 # PHASE 1: RESEARCH — Individual agent functions
 # ═══════════════════════════════════════════════
