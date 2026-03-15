@@ -3,15 +3,16 @@ import { motion } from 'framer-motion';
 import { MessageSquare, Send, SkipForward, Mic } from 'lucide-react';
 
 interface HumanInputPanelProps {
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string, targetAgent: string) => void;
   onSkip: () => void;
 }
 
 const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) => {
   const [input, setInput] = useState('');
+  const [targetAgent, setTargetAgent] = useState('all');
 
   const handleSubmit = () => {
-    onSubmit(input);
+    onSubmit(input, targetAgent);
     setInput('');
   };
 
@@ -33,29 +34,48 @@ const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) =
           The Board Awaits Your Input
         </h2>
       </div>
+
       <p className="text-muted-foreground text-sm mb-5">
-        Ask the board a question or challenge their reasoning to shape the next round of deliberation.
+        Ask the board a question or challenge a specific agent's reasoning.
       </p>
+
+      <div className="flex gap-3 mb-4">
+        <select
+          value={targetAgent}
+          onChange={(e) => setTargetAgent(e.target.value)}
+          className="bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors"
+        >
+          <option value="all">Ask All Agents</option>
+          <option value="CFO">Challenge CFO</option>
+          <option value="CMO">Challenge CMO</option>
+          <option value="Legal">Challenge Legal</option>
+          <option value="Devils Advocate">Challenge Devil's Advocate</option>
+        </select>
+      </div>
+
       <div className="relative mb-5">
         <input
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          placeholder="Ask the board a question or challenge their reasoning..."
+          placeholder={targetAgent === 'all' 
+            ? "Ask the board a question..." 
+            : `Challenge the ${targetAgent}'s position...`}
           className="w-full bg-secondary/50 border border-border rounded-lg px-4 py-4 pr-12 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground/50"
         />
         <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground transition-colors" title="Voice input (coming soon)">
           <Mic size={18} />
         </button>
       </div>
+
       <div className="flex gap-3">
         <button
           onClick={handleSubmit}
           className="flex-1 gold-gradient text-primary-foreground py-3 rounded-lg font-semibold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
           <Send size={14} />
-          Send to Board
+          {targetAgent === 'all' ? 'Send to Board' : `Challenge ${targetAgent}`}
         </button>
         <button
           onClick={onSkip}

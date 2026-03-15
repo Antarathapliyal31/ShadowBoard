@@ -40,6 +40,7 @@ class SessionRequest(BaseModel):
 
 class HumanInput(BaseModel):
     human_ip: str
+    target_agent: str = "all"
 
 sessions_info = {}
 
@@ -140,24 +141,38 @@ def agents_research(session_id: str):
             if elapsed >= timeout:
                 break
         human_input = sessions_info[session_id].pop("human_input", "")
+        target_agent = sessions_info[session_id].pop("target_agent", "all")
+         #have built different messages for targeted vs other agents
+        if target_agent == "all" or not human_input:
+            cfo_input = human_input
+            cmo_input = human_input
+            legal_input = human_input
+            da_input = human_input
+        else:
+            direct = f"The human decision-maker has DIRECTLY CHALLENGED YOU: '{human_input}'. Respond to this challenge FIRST."
+            observe = f"The human challenged the {target_agent} with: '{human_input}'. Consider their exchange and adjust your position if needed."
+            cfo_input = direct if target_agent == "CFO" else observe
+            cmo_input = direct if target_agent == "CMO" else observe
+            legal_input = direct if target_agent == "Legal" else observe
+            da_input = direct if target_agent == "Devils Advocate" else observe
 
         # ═══ PHASE 2: DEBATE ROUND 2 (one agent at a time) ═══
         yield sse_event("phase", {"phase": "debate", "round": 2})
 
         yield sse_event("agent_start", {"agent": "CFO", "action": "preparing rebuttal"})
-        debate_cfo_2 = run_debate2_cfo(full_question, debate_cfo, debate_cmo, debate_legal, debate_da, human_input)
+        debate_cfo_2 = run_debate2_cfo(full_question, debate_cfo, debate_cmo, debate_legal, debate_da, cfo_input)
         yield sse_event("agent_message", {"agent": "CFO", "phase": "debate", "round": 2, "text": debate_cfo_2.output.raw})
 
         yield sse_event("agent_start", {"agent": "CMO", "action": "preparing rebuttal"})
-        debate_cmo_2 = run_debate2_cmo(full_question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, human_input)
+        debate_cmo_2 = run_debate2_cmo(full_question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, cmo_input)
         yield sse_event("agent_message", {"agent": "CMO", "phase": "debate", "round": 2, "text": debate_cmo_2.output.raw})
 
         yield sse_event("agent_start", {"agent": "Legal", "action": "preparing rebuttal"})
-        debate_legal_2 = run_debate2_legal(full_question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2, human_input)
+        debate_legal_2 = run_debate2_legal(full_question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2, legal_input)
         yield sse_event("agent_message", {"agent": "Legal", "phase": "debate", "round": 2, "text": debate_legal_2.output.raw})
 
         yield sse_event("agent_start", {"agent": "Devils Advocate", "action": "preparing final challenge"})
-        debate_da_2 = run_debate2_da(full_question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2, debate_legal_2, human_input)
+        debate_da_2 = run_debate2_da(full_question, debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2, debate_legal_2, da_input)
         yield sse_event("agent_message", {"agent": "Devils Advocate", "phase": "debate", "round": 2, "text": debate_da_2.output.raw})
 
         # ═══ PHASE 2: DEBATE ROUND 3 (one agent at a time) ═══
@@ -214,4 +229,5 @@ def agents_research(session_id: str):
 def human_input_endpoint(session_id: str, request: HumanInput):
     session_info = sessions_info[session_id]
     session_info["human_input"] = request.human_ip
+    session_info["target_agent"] = request.target_agent
     return {"status": "received"}

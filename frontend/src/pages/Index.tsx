@@ -140,7 +140,7 @@ const Index = () => {
     }
   };
 
-  const submitHumanInput = async (text: string) => {
+  const submitHumanInput = async (text: string, targetAgent: string = 'all') => {
     if (!sessionId) return;
     setIsPaused(false);
     setIsThinking(true);
@@ -148,7 +148,7 @@ const Index = () => {
       await fetch(`${API_BASE}/api/${sessionId}/human_input`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ human_ip: text }),
+        body: JSON.stringify({ human_ip: text, target_agent: targetAgent }),
       });
     } catch {
       setError('Failed to send input.');
@@ -288,8 +288,8 @@ const Index = () => {
 
         {isPaused && (
           <HumanInputPanel
-            onSubmit={(text) => submitHumanInput(text)}
-            onSkip={() => submitHumanInput('')}
+            onSubmit={(text,targetAgent) => submitHumanInput(text,targetAgent)}
+            onSkip={() => submitHumanInput('', 'all')}
           />
         )}
 

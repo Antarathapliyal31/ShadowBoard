@@ -86,7 +86,8 @@ def run_research_cfo(question):
         3. What's the ROI timeline?
         4. What financial risks exist?
         
-        Keep under 300 words. Cite specific numbers.""",
+        Keep under 300 words. Cite specific numbers.
+        IMPORTANT: For every key data point, cite your source. Format: [Source: URL]""",
         agent=CFO_agent,
         expected_output="Financial analysis with specific numbers and a clear recommendation"
     )
@@ -108,7 +109,8 @@ def run_research_cmo(question):
         3. Who is the competition?
         4. What is the marketing strategy?
         
-        Keep under 300 words. Cite specific numbers.""",
+        Keep under 300 words. Cite specific numbers.
+        IMPORTANT: For every key data point, cite your source. Format: [Source: URL]""",
         agent=CMO_agent,
         expected_output="Marketing analysis with specific numbers and a clear recommendation"
     )
@@ -130,7 +132,8 @@ def run_research_legal(question):
         3. What is the compliance strategy?
         4. What is the risk assessment?
         
-        Keep under 300 words. Cite specific numbers.""",
+        Keep under 300 words. Cite specific numbers.
+        IMPORTANT: For every key data point, cite your source. Format: [Source: URL]""",
         agent=Legal_agent,
         expected_output="Legal analysis with specific numbers and a clear recommendation"
     )
@@ -152,7 +155,9 @@ def run_debate1_cfo(question, task_cfo, task_cmo, task_legal):
         2. Present your top 3 financial arguments with evidence
         3. Identify the #1 financial risk
         
-        Keep under 200 words.""",
+        Keep under 200 words.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.""",
         agent=CFO_agent,
         context=[task_cfo, task_cmo, task_legal],
         expected_output="CFO's opening position with financial arguments"
@@ -171,7 +176,9 @@ def run_debate1_cmo(question, task_cfo, task_cmo, task_legal, debate_cfo):
         2. Present your top 3 market arguments with evidence
         3. Respond to CFO if you agree or disagree and why
         
-        Keep under 200 words.""",
+        Keep under 200 words.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL].
+        When referencing another agent's argument, name them directly.""",
         agent=CMO_agent,
         context=[task_cfo, task_cmo, task_legal, debate_cfo],
         expected_output="CMO's opening position with market arguments"
@@ -190,7 +197,9 @@ def run_debate1_legal(question, task_cfo, task_cmo, task_legal, debate_cfo, deba
         2. Present your top 3 legal arguments with evidence
         3. Respond to CFO and CMO if you agree or disagree and why
         
-        Keep under 200 words.""",
+        Keep under 200 words.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.""",
         agent=Legal_agent,
         context=[task_cfo, task_cmo, task_legal, debate_cfo, debate_cmo],
         expected_output="Legal Counsel's opening position with legal arguments"
@@ -210,7 +219,9 @@ def run_debate1_da(question, task_cfo, task_cmo, task_legal, debate_cfo, debate_
         3. Quote Legal's risk assessment and argue it's understated or overstated
         
         Be specific. Name agents. Quote their claims. Provide counter-evidence.
-        Keep under 200 words.""",
+        Keep under 200 words.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.""",
         agent=Devils_Advocate_agent,
         context=[task_cfo, task_cmo, task_legal, debate_cfo, debate_cmo, debate_legal],
         expected_output="Devil's Advocate challenge with specific counter-arguments"
@@ -237,7 +248,9 @@ def run_debate2_cfo(question, debate_cfo, debate_cmo, debate_legal, debate_da, h
         3. If the Devil's Advocate challenged your numbers, address it directly
         {human_section}
         
-        Keep under 200 words. Be specific — quote other agents' claims.""",
+        Keep under 200 words. Be specific — quote other agents' claims.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.""",
         agent=CFO_agent,
         context=[debate_cfo, debate_cmo, debate_legal, debate_da],
         expected_output="A rebuttal addressing other agents' specific points with financial counter-arguments"
@@ -260,7 +273,9 @@ def run_debate2_cmo(question, debate_cfo, debate_cmo, debate_legal, debate_da, d
         3. If the Devil's Advocate challenged your claims, address it directly
         {human_section}
         
-        Keep under 200 words. Be specific — quote other agents' claims.""",
+        Keep under 200 words. Be specific — quote other agents' claims.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.""",
         agent=CMO_agent,
         context=[debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2],
         expected_output="A rebuttal addressing other agents' specific points with market counter-arguments"
@@ -283,7 +298,9 @@ def run_debate2_legal(question, debate_cfo, debate_cmo, debate_legal, debate_da,
         3. If CFO or CMO dismissed your legal risks, push back with evidence
         {human_section}
         
-        Keep under 200 words. Be specific — quote other agents' claims.""",
+        Keep under 200 words. Be specific — quote other agents' claims.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.""",
         agent=Legal_agent,
         context=[debate_cfo, debate_cmo, debate_legal, debate_da, debate_cfo_2, debate_cmo_2],
         expected_output="A rebuttal addressing other agents' specific points with legal counter-arguments"
@@ -306,7 +323,9 @@ def run_debate2_da(question, debate_cfo, debate_cmo, debate_legal, debate_da, de
         3. Quote specific numbers or claims from other agents and explain why they are wrong
         {human_section}
         
-        Keep under 200 words. Be ruthless but fair — attack arguments, not agents.""",
+        Keep under 200 words. Be ruthless but fair — attack arguments, not agents.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.""",
         agent=Devils_Advocate_agent,
         context=[debate_cfo, debate_cmo, debate_legal, debate_da,
                  debate_cfo_2, debate_cmo_2, debate_legal_2],
@@ -326,7 +345,10 @@ def run_debate3_cfo(question, all_context):
         description=f"""FINAL ROUND. You are the CFO. One paragraph only.
         State: GO / NO-GO / CONDITIONAL on: {question}
         Your single strongest financial argument. Quote specific numbers.
-        One financial risk that must be monitored.""",
+        One financial risk that must be monitored.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.
+        State your confidence level (0-100%) in your position and explain why.""",
         agent=CFO_agent,
         context=all_context,
         expected_output="Final CFO position: GO/NO-GO/CONDITIONAL with one reason and one risk"
@@ -341,7 +363,10 @@ def run_debate3_cmo(question, all_context):
         description=f"""FINAL ROUND. You are the CMO. One paragraph only.
         State: GO / NO-GO / CONDITIONAL on: {question}
         Your single strongest market argument. Quote specific numbers.
-        One market risk that must be monitored.""",
+        One market risk that must be monitored.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.
+        State your confidence level (0-100%) in your position and explain why.""",
         agent=CMO_agent,
         context=all_context,
         expected_output="Final CMO position: GO/NO-GO/CONDITIONAL with one reason and one risk"
@@ -356,7 +381,10 @@ def run_debate3_legal(question, all_context):
         description=f"""FINAL ROUND. You are the Legal Counsel. One paragraph only.
         State: GO / NO-GO / CONDITIONAL on: {question}
         Your single strongest legal argument. Quote specific numbers.
-        One legal risk that must be monitored.""",
+        One legal risk that must be monitored.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.
+        State your confidence level (0-100%) in your position and explain why.""",
         agent=Legal_agent,
         context=all_context,
         expected_output="Final Legal position: GO/NO-GO/CONDITIONAL with one reason and one risk"
@@ -371,7 +399,10 @@ def run_debate3_da(question, all_context):
         description=f"""FINAL ROUND. You are the Devil's Advocate. One paragraph only.
         State: GO / NO-GO / CONDITIONAL on: {question}
         Your single strongest challenge. Quote specific numbers.
-        The one risk everyone else is underestimating.""",
+        The one risk everyone else is underestimating.
+        IMPORTANT: If you cite external data, include the source. Format: [Source: URL]. 
+        When referencing another agent's argument, name them directly.
+        State your confidence level (0-100%) in your position and explain why.""",
         agent=Devils_Advocate_agent,
         context=all_context,
         expected_output="Final Devil's Advocate position with the strongest remaining challenge"
