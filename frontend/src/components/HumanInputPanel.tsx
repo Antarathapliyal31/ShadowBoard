@@ -64,7 +64,23 @@ const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) =
             : `Challenge the ${targetAgent}'s position...`}
           className="w-full bg-secondary/50 border border-border rounded-lg px-4 py-4 pr-12 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground/50"
         />
-        <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground transition-colors" title="Voice input (coming soon)">
+        <button
+          onClick={() => {
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+              alert('Speech recognition not supported in this browser');
+              return;
+            }
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.onresult = (event: any) => {
+              const transcript = event.results[0][0].transcript;
+              setInput((prev) => prev + transcript);
+            };
+            recognition.start();
+          }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-primary transition-colors"
+          title="Click to speak">
           <Mic size={18} />
         </button>
       </div>
