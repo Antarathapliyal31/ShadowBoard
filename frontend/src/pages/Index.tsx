@@ -40,6 +40,7 @@ const Index = () => {
   const eventSourceRef = useRef<EventSource | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [boardType, setBoardType] = useState('tech');
 
   const scrollToBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -118,7 +119,7 @@ const Index = () => {
       const res = await fetch(`${API_BASE}/api/session/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, context }),
+        body: JSON.stringify({ question, context, board_type: boardType }),
       });
       const data = await res.json();
       setSessionId(data.session);
@@ -232,6 +233,31 @@ const Index = () => {
                 </button>
               )}
             </div>
+            <div className="mt-4 mb-2">
+              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-2 block">
+                Board Expertise
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { id: 'tech', label: '💻 Tech' },
+                  { id: 'healthcare', label: '🏥 Healthcare' },
+                  { id: 'finance', label: '🏦 Finance' },
+                  { id: 'retail', label: '🛒 Retail' },
+                ].map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => setBoardType(b.id)}
+                    className={`px-4 py-2 rounded-lg border text-xs transition-all ${
+                      boardType === b.id
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary/40'
+                    }`}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            </div>
               {/* Example chips */}
 
               {/* Example chips */}
@@ -337,6 +363,7 @@ const Index = () => {
                 setIsThinking(false);
                 setQuestion('');
                 setContext('');
+                setBoardType('tech');
                 setUploadedFile(null);    
                 setError(null);
                 eventSourceRef.current?.close();

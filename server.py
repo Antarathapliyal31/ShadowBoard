@@ -13,6 +13,7 @@ from agents_creation import parse_vote
 import fitz
 import docx
 import io
+from agents_creation import set_board_expertise
 
 
 from agents_creation import (
@@ -37,6 +38,7 @@ def sse_event(event_type, data):
 class SessionRequest(BaseModel):
     question: str
     context: str =""
+    board_type: str = "tech"
 
 class HumanInput(BaseModel):
     human_ip: str
@@ -51,7 +53,7 @@ def home():
 @app.post("/api/session/create")
 def session_id_creation(request: SessionRequest):
     session_id = str(uuid.uuid4())
-    sessions_info[session_id] = {"question": request.question,"context":request.context}
+    sessions_info[session_id] = {"question": request.question,"context":request.context,"board_type": request.board_type}
     return {"session": session_id}
 
 @app.get("/api/{session_id}/download_pdf")
@@ -88,6 +90,8 @@ def agents_research(session_id: str):
     session = sessions_info[session_id]
     question = session["question"]
     context=session.get("context", "")
+    board_type = session.get("board_type", "tech")
+    set_board_expertise(board_type)
     file_context = session.get("file_context", "")
     if file_context:
         full_question = f"{question}\n\nCOMPANY CONTEXT: {context}\n\nUPLOADED DOCUMENT:\n{file_context[:3000]}"

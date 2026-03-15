@@ -69,6 +69,39 @@ def parse_vote(task):
     elif "GO" in text:
         return "GO"
     return "UNDECIDED"
+
+BOARD_PRESETS = {
+    "tech": {
+        "CFO": "10 years experience in tech startups and SaaS companies. Expert in ARR, burn rate, runway, and venture-backed growth metrics.",
+        "CMO": "10 years in tech marketing. Expert in product-led growth, developer marketing, viral loops, and SaaS growth strategies.",
+        "Legal": "10 years in tech law. Expert in IP protection, data privacy (GDPR/CCPA), antitrust for digital platforms, and open source licensing.",
+        "DA": "10 years challenging tech company assumptions. Expert in identifying hype vs reality, bubble risks, and unsustainable growth claims."
+    },
+    "healthcare": {
+        "CFO": "10 years in healthcare finance. Expert in FDA approval costs, insurance reimbursement models, clinical trial economics, and pharmaceutical pricing.",
+        "CMO": "10 years in healthcare marketing. Expert in patient acquisition, HCP engagement, regulatory-compliant advertising, and medical device go-to-market.",
+        "Legal": "10 years in healthcare law. Expert in HIPAA compliance, FDA regulations, Medicare/Medicaid rules, clinical liability, and pharmaceutical patents.",
+        "DA": "10 years challenging healthcare assumptions. Expert in identifying regulatory risks, patient safety concerns, and clinical trial failures."
+    },
+    "finance": {
+        "CFO": "10 years in banking and fintech. Expert in capital requirements, risk-weighted assets, Basel regulations, and financial product economics.",
+        "CMO": "10 years in financial services marketing. Expert in trust-building, compliance marketing, B2B financial products, and wealth management client acquisition.",
+        "Legal": "10 years in financial law. Expert in SEC regulations, Dodd-Frank compliance, AML/KYC requirements, banking charters, and consumer lending laws.",
+        "DA": "10 years challenging financial assumptions. Expert in identifying systemic risks, hidden exposures, regulatory traps, and market manipulation risks."
+    },
+    "retail": {
+        "CFO": "10 years in retail and e-commerce finance. Expert in unit economics, inventory management, omnichannel profitability, and supply chain costs.",
+        "CMO": "10 years in retail marketing. Expert in customer acquisition, brand loyalty programs, DTC strategies, seasonal demand planning, and marketplace dynamics.",
+        "Legal": "10 years in retail law. Expert in consumer protection, supply chain contracts, labor law, product liability, and international trade regulations.",
+        "DA": "10 years challenging retail assumptions. Expert in identifying margin compression, supply chain risks, market saturation, and consumer behavior shifts."
+    }
+}
+def set_board_expertise(board_type):
+    preset = BOARD_PRESETS.get(board_type, BOARD_PRESETS["tech"])
+    CFO_agent.backstory = preset["CFO"]
+    CMO_agent.backstory = preset["CMO"]
+    Legal_agent.backstory = preset["Legal"]
+    Devils_Advocate_agent.backstory = preset["DA"]
 # ═══════════════════════════════════════════════
 # PHASE 1: RESEARCH — Individual agent functions
 # ═══════════════════════════════════════════════
