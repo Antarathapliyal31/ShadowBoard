@@ -671,6 +671,7 @@ if (!user) {
                 setUploadedFile(null);    
                 setError(null);
                 setCompareSession(null);
+                setShowHistory(false)
                 setCompareWith(null);
                 eventSourceRef.current?.close();
             }}
