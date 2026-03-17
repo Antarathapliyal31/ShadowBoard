@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { MessageSquare, Send, SkipForward, Mic, MicOff } from 'lucide-react';
 
 interface HumanInputPanelProps {
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string, targetAgent: string) => void;
   onSkip: () => void;
 }
 
@@ -13,6 +13,7 @@ const SpeechRecognition =
 const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) => {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [targetAgent, setTargetAgent] = useState('all');
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -69,7 +70,7 @@ const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) =
   const handleSubmit = () => {
     recognitionRef.current?.stop();
     setIsListening(false);
-    onSubmit(input);
+    onSubmit(input, targetAgent);
     setInput('');
   };
 
@@ -91,16 +92,34 @@ const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) =
           The Board Awaits Your Input
         </h2>
       </div>
+
       <p className="text-muted-foreground text-sm mb-5">
-        Ask the board a question or challenge their reasoning. You can type or use the mic to speak.
+        Ask the board a question or challenge a specific agent's reasoning. You can type or use the mic to speak.
       </p>
+
+      <div className="flex gap-3 mb-4">
+        <select
+          value={targetAgent}
+          onChange={(e) => setTargetAgent(e.target.value)}
+          className="bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors"
+        >
+          <option value="all">Ask All Agents</option>
+          <option value="CFO">Challenge CFO</option>
+          <option value="CMO">Challenge CMO</option>
+          <option value="Legal">Challenge Legal</option>
+          <option value="Devils Advocate">Challenge Devil's Advocate</option>
+        </select>
+      </div>
+
       <div className="relative mb-5">
         <input
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          placeholder={isListening ? 'Listening...' : 'Ask the board a question or challenge their reasoning...'}
+          placeholder={isListening ? 'Listening...' : (targetAgent === 'all'
+            ? "Ask the board a question..."
+            : `Challenge the ${targetAgent}'s position...`)}
           className={`w-full bg-secondary/50 border rounded-lg px-4 py-4 pr-12 text-sm text-foreground focus:outline-none transition-colors placeholder:text-muted-foreground/50 ${
             isListening ? 'border-primary/60 bg-primary/5' : 'border-border focus:border-primary/50'
           }`}
@@ -132,7 +151,7 @@ const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) =
           className="flex-1 gold-gradient text-primary-foreground py-3 rounded-lg font-semibold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
           <Send size={14} />
-          Send to Board
+          {targetAgent === 'all' ? 'Send to Board' : `Challenge ${targetAgent}`}
         </button>
         <button
           onClick={onSkip}

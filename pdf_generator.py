@@ -117,8 +117,7 @@ def generate_strategy_brief_pdf(question, moderator_text, session_id):
         if line.startswith('- '):
             pdf.set_font("Helvetica", "", 9)
             bullet_text = clean_text(line[2:])
-            pdf.cell(5)  # indent
-            pdf.multi_cell(165, 5, f"  {bullet_text}")
+            pdf.multi_cell(0, 5, f"  - {bullet_text}")
             pdf.ln(1)
             i += 1
             continue

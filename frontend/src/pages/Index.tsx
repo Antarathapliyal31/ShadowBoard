@@ -45,6 +45,17 @@ const Index = () => {
   const eventSourceRef = useRef<EventSource | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [boardType, setBoardType] = useState('tech');
+  const [user, setUser] = useState<any>(null);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [compareSession, setCompareSession] = useState<any>(null);
+  const [compareWith, setCompareWith] = useState<any>(null);
 
   const scrollToBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -68,12 +79,19 @@ const Index = () => {
     es.addEventListener('phase', (e) => {
       try {
         const data = JSON.parse(e.data);
-        if (data.phase && PHASE_MAP[data.phase] !== undefined) {
-          setCurrentPhase(PHASE_MAP[data.phase]);
+        
+        if (data.phase === 'research') {
+            setCurrentPhase(0);
+        } else if (data.phase === 'debate' && data.round === 1) {
+            setCurrentPhase(1);
+        } else if (data.phase === 'debate' && data.round === 2) {
+            setCurrentPhase(3);
+        } else if (data.phase === 'debate' && data.round === 3) {
+            setCurrentPhase(4);
+        } else if (data.phase === 'synthesis') {
+            setCurrentPhase(5);
         }
-        if (data.round) {
-          setCurrentPhase(data.round);
-        }
+        
         setIsThinking(true);
       } catch { /* ignore */ }
     });
@@ -111,6 +129,11 @@ const Index = () => {
       try { JSON.parse(e.data); } catch { /* ignore */ }
     });
 
+    es.addEventListener('resume', () => {
+      setIsPaused(false);
+      setIsThinking(true);
+    });
+
     es.addEventListener('error', (e) => {
       try {
         const data = JSON.parse((e as MessageEvent).data);
@@ -140,7 +163,7 @@ const Index = () => {
       const res = await fetch(`${API_BASE}/api/session/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, context }),
+        body: JSON.stringify({ question, context, board_type: boardType,user_id: user?.user_id || '' }),
       });
       const data = await res.json();
       setSessionId(data.session);
@@ -162,13 +185,14 @@ const Index = () => {
     }
   };
 
-  const submitHumanInput = async (text: string) => {
+
+  const submitHumanInput = async (text: string, targetAgent: string = 'all') => {
     if (!sessionId) return;
     try {
       const response = await fetch(`${API_BASE}/api/${sessionId}/human_input`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ human_ip: text }),
+        body: JSON.stringify({ human_ip: text, target_agent: targetAgent }),
       });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -180,7 +204,146 @@ const Index = () => {
       setError('Failed to send input. Please try again.');
     }
   };
+  const handleLogin = async () => {
+    setAuthError('');
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: authEmail, password: authPassword }),
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            setUser(data.user);
+        } else {
+            setAuthError(data.message);
+        }
+    } catch {
+        setAuthError('Connection failed');
+    }
+};
 
+  const handleSignup = async () => {
+      setAuthError('');
+      try {
+          const res = await fetch(`${API_BASE}/api/auth/signup`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: authEmail, password: authPassword, name: authName }),
+          });
+          const data = await res.json();
+          if (data.status === 'success') {
+              setUser(data.user);
+          } else {
+              setAuthError(data.message);
+          }
+      } catch {
+          setAuthError('Connection failed');
+      }
+  };
+
+  const loadHistory = async () => {
+      if (!user) return;
+      try {
+          const res = await fetch(`${API_BASE}/api/sessions/history/${user.user_id}`);
+          const data = await res.json();
+          setHistory(data.sessions);
+          setShowHistory(true);
+      } catch {
+          setError('Failed to load history');
+      }
+  };
+  // Auth screen
+if (!user) {
+    return (
+        <div className="min-h-svh flex flex-col bg-grid-pattern">
+            <div className="flex-1 flex flex-col items-center justify-center px-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center mb-8"
+                >
+                    <h1 className="text-5xl md:text-7xl font-serif font-bold tracking-tight mb-4 gold-gradient-text">
+                        SHADOW BOARD
+                    </h1>
+                    <p className="text-muted-foreground text-sm">
+                        AI-Powered Executive Decision Simulation
+                    </p>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="w-full max-w-md"
+                >
+                    <div className="glass-card-strong rounded-xl p-6 md:p-8">
+                        <div className="flex gap-4 mb-6">
+                            <button
+                                onClick={() => setAuthMode('login')}
+                                className={`flex-1 py-2 text-sm font-semibold uppercase tracking-wider rounded-lg transition-all ${
+                                    authMode === 'login'
+                                        ? 'gold-gradient text-primary-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                Login
+                            </button>
+                            <button
+                                onClick={() => setAuthMode('signup')}
+                                className={`flex-1 py-2 text-sm font-semibold uppercase tracking-wider rounded-lg transition-all ${
+                                    authMode === 'signup'
+                                        ? 'gold-gradient text-primary-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                Sign Up
+                            </button>
+                        </div>
+
+                        {authMode === 'signup' && (
+                            <input
+                                value={authName}
+                                onChange={(e) => setAuthName(e.target.value)}
+                                placeholder="Your name"
+                                className="w-full bg-secondary/40 border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-colors mb-3 placeholder:text-muted-foreground/50"
+                            />
+                        )}
+
+                        <input
+                            value={authEmail}
+                            onChange={(e) => setAuthEmail(e.target.value)}
+                            placeholder="Email"
+                            type="email"
+                            className="w-full bg-secondary/40 border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-colors mb-3 placeholder:text-muted-foreground/50"
+                        />
+
+                        <input
+                            value={authPassword}
+                            onChange={(e) => setAuthPassword(e.target.value)}
+                            placeholder="Password"
+                            type="password"
+                            onKeyDown={(e) => e.key === 'Enter' && (authMode === 'login' ? handleLogin() : handleSignup())}
+                            className="w-full bg-secondary/40 border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-colors mb-4 placeholder:text-muted-foreground/50"
+                        />
+
+                        {authError && (
+                            <p className="text-destructive text-xs mb-3">{authError}</p>
+                        )}
+
+                        <button
+                            onClick={authMode === 'login' ? handleLogin : handleSignup}
+                            className="w-full py-3 rounded-lg gold-gradient text-primary-foreground font-bold uppercase tracking-wider text-sm hover:opacity-90 transition-all"
+                        >
+                            {authMode === 'login' ? 'Login' : 'Create Account'}
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+            <AppFooter />
+        </div>
+    );
+}
   const agentCount = new Set(messages.map(m => m.agent)).size;
   const roundCount = new Set(messages.filter(m => m.round).map(m => m.round)).size;
 
@@ -189,12 +352,154 @@ const Index = () => {
     return (
       <div className="min-h-svh flex flex-col bg-grid-pattern">
         {/* Top bar */}
-        <div className="flex justify-end p-4 md:p-6">
-          <div className="flex items-center gap-2 glass-card rounded-full px-4 py-2">
+        <div className="flex justify-end p-4 md:p-6 gap-3">
+        <span className="flex items-center gap-2 glass-card rounded-full px-4 py-2 text-[10px] font-mono text-muted-foreground">
+            Welcome, {user.name}
+        </span>
+        <button
+            onClick={loadHistory}
+            className="flex items-center gap-2 glass-card rounded-full px-4 py-2 hover:bg-primary/10 transition-colors"
+        >
+            <FileText size={14} className="text-primary" />
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Past Sessions</span>
+        </button>
+        <button
+            onClick={() => setUser(null)}
+            className="flex items-center gap-2 glass-card rounded-full px-4 py-2 hover:bg-destructive/10 transition-colors"
+        >
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Logout</span>
+        </button>
+        <div className="flex items-center gap-2 glass-card rounded-full px-4 py-2">
             <Shield size={14} className="text-primary" />
             <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Powered by AIRIA</span>
-          </div>
         </div>
+        </div>
+
+      {showHistory && (
+    <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-4xl mx-auto px-6 mb-8">
+        <div className="glass-card-strong rounded-xl p-6">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="font-serif text-xl font-bold gold-gradient-text">Past Sessions</h2>
+                <button
+                    onClick={() => setShowHistory(false)}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                    ✕ Close
+                </button>
+            </div>
+            {history.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No past sessions yet.</p>
+            ) : (
+                <div className="space-y-3">
+                    {history.map((s: any) => (
+                  <div
+                      key={s.session_id}
+                      className="glass-card rounded-lg p-4 hover:bg-primary/5 transition-colors"
+                  >
+                      <div className="flex justify-between items-start mb-2">
+                          <p className="text-sm font-medium text-foreground flex-1">{s.question}</p>
+                          <span className="text-[10px] font-mono text-muted-foreground ml-2">
+                              {new Date(s.created_at).toLocaleDateString()}
+                          </span>
+                      </div>
+                      <div className="flex gap-2 text-xs mb-3 flex-wrap">
+                          <span className="uppercase font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-muted/50">
+                              {s.board_type}
+                          </span>
+                          {Object.entries(s.votes || {}).map(([agent, vote]: [string, any]) => (
+                              <span key={agent} className={`px-2 py-0.5 rounded-full ${
+                                  vote === 'GO' ? 'bg-cmo/10 text-cmo' :
+                                  vote === 'NO-GO' ? 'bg-devil/10 text-devil' : 'bg-legal/10 text-legal'
+                              }`}>
+                                  {agent}: {vote}
+                              </span>
+                          ))}
+                      </div>
+                      {s.moderator_summary && (
+                          <details className="text-xs text-muted-foreground">
+                              <summary className="cursor-pointer hover:text-foreground transition-colors font-mono uppercase tracking-wider mb-2">
+                                  View Strategy Brief
+                              </summary>
+                              <div className="bg-secondary/30 rounded-lg p-3 mt-1 text-foreground/70 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                                  {s.moderator_summary}
+                              </div>
+                          </details>
+                      )}
+                      <div className="flex gap-2 mt-3">
+                          <button
+                              onClick={() => {
+                                  setQuestion(s.question);
+                                  setContext(s.context || '');
+                                  setBoardType(s.board_type || 'tech');
+                                  setShowHistory(false);
+                              }}
+                              className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
+                          >
+                              Re-run this question
+                          </button>
+                          <button
+                              onClick={() => {
+                                  if (compareSession && compareSession.session_id !== s.session_id) {
+                                      setCompareWith(s);
+                                  } else {
+                                      setCompareSession(s);
+                                  }
+                              }}
+                              className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-all"
+                          >
+                              {compareSession?.session_id === s.session_id ? '✓ Selected' : 'Compare'}
+                          </button>
+                      </div>
+                  </div>
+              ))}
+                </div>
+            )}
+            {compareSession && compareWith && (
+    <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-6 border-t border-border/30 pt-6"
+    >
+        <div className="flex justify-between items-center mb-4">
+            <h3 className="font-serif text-lg font-bold gold-gradient-text">
+                Session Comparison
+            </h3>
+            <button
+                onClick={() => { setCompareSession(null); setCompareWith(null); }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+            >
+                ✕ Clear comparison
+            </button>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+            {[compareSession, compareWith].map((s: any, idx: number) => (
+                <div key={idx} className="glass-card rounded-lg p-4">
+                    <p className="text-sm font-medium text-foreground mb-3">
+                        {s.question}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                        {Object.entries(s.votes || {}).map(([agent, vote]: [string, any]) => (
+                            <span key={agent} className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                vote === 'GO' ? 'bg-cmo/10 text-cmo' :
+                                vote === 'NO-GO' ? 'bg-devil/10 text-devil' : 'bg-legal/10 text-legal'
+                            }`}>
+                                {agent}: {vote}
+                            </span>
+                        ))}
+                    </div>
+                    <div className="text-xs text-muted-foreground whitespace-pre-wrap max-h-64 overflow-y-auto bg-secondary/30 rounded-lg p-3">
+                        {s.moderator_summary || 'No summary available'}
+                    </div>
+                </div>
+            ))}
+        </div>
+        </motion.div>)}
+        </div>
+    </motion.div>
+)}
 
         {/* Hero */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
@@ -285,6 +590,31 @@ const Index = () => {
                 </button>
               )}
             </div>
+            <div className="mt-4 mb-2">
+              <label className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-2 block">
+                Board Expertise
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { id: 'tech', label: '💻 Tech' },
+                  { id: 'healthcare', label: '🏥 Healthcare' },
+                  { id: 'finance', label: '🏦 Finance' },
+                  { id: 'retail', label: '🛒 Retail' },
+                ].map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => setBoardType(b.id)}
+                    className={`px-4 py-2 rounded-lg border text-xs transition-all ${
+                      boardType === b.id
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary/40'
+                    }`}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            </div>
               {/* Example chips */}
 
               {/* Example chips */}
@@ -341,8 +671,8 @@ const Index = () => {
 
         {isPaused && (
           <HumanInputPanel
-            onSubmit={(text) => submitHumanInput(text)}
-            onSkip={() => submitHumanInput('')}
+            onSubmit={(text,targetAgent) => submitHumanInput(text,targetAgent)}
+            onSkip={() => submitHumanInput('', 'all')}
           />
         )}
 
@@ -390,8 +720,12 @@ const Index = () => {
                 setIsThinking(false);
                 setQuestion('');
                 setContext('');
+                setBoardType('tech');
                 setUploadedFile(null);    
                 setError(null);
+                setCompareSession(null);
+                setShowHistory(false)
+                setCompareWith(null);
                 eventSourceRef.current?.close();
             }}
               className="mt-6 px-6 py-3 rounded-lg border border-primary/30 text-primary font-semibold uppercase tracking-wider text-sm hover:bg-primary/10 transition-all">
