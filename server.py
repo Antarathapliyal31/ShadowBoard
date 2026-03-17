@@ -15,6 +15,12 @@ import docx
 import io
 from fastapi import UploadFile, File
 from agents_creation import set_board_expertise
+from database import signup_user, login_user, save_session, get_user_sessions
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
 
 
 from agents_creation import (
@@ -40,6 +46,16 @@ class SessionRequest(BaseModel):
     question: str
     context: str =""
     board_type: str = "tech"
+    user_id:str =""
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 class HumanInput(BaseModel):
     human_ip: str
@@ -51,10 +67,37 @@ sessions_info = {}
 def home():
     return {"message": "Shadow Board API is running"}
 
+def validate_question(question: str) -> str:
+    # Limit length
+    if len(question) > 1000:
+        question = question[:1000]
+    
+    # Block obvious prompt injection attempts
+    blocked_phrases = [
+        "ignore previous instructions",
+        "ignore your instructions",
+        "you are now",
+        "forget your role",
+        "system prompt",
+        "reveal your prompt"
+    ]
+    lower = question.lower()
+    for phrase in blocked_phrases:
+        if phrase in lower:
+            raise ValueError("Invalid input detected")
+    
+    return question
+
 @app.post("/api/session/create")
+@limiter.limit("5/minute")
 def session_id_creation(request: SessionRequest):
     session_id = str(uuid.uuid4())
-    sessions_info[session_id] = {"question": request.question,"context":request.context,"board_type": request.board_type}
+    sessions_info[session_id] = {"question": request.question,"context":request.context,"board_type": request.board_type,"user_id": request.user_id}
+    try:
+        question = validate_question(request.question)
+    except ValueError:
+        return {"error": "Invalid question"}
+    # ... rest of code
     return {"session": session_id}
 
 @app.get("/api/{session_id}/download_pdf")
@@ -84,6 +127,26 @@ async def upload_file(session_id: str, file: UploadFile = File(...)):
     #Store in session
     sessions_info[session_id]["file_context"] = text
     return {"status": "uploaded", "characters": len(text)}
+
+@app.post("/api/auth/signup")
+def signup(request: SignupRequest):
+    user = signup_user(request.email, request.password, request.name)
+    if user:
+        return {"status": "success", "user": user}
+    return {"status": "error", "message": "Email already exists or invalid"}
+
+@app.post("/api/auth/login")
+def login(request: LoginRequest):
+    user = login_user(request.email, request.password)
+    if user:
+        return {"status": "success", "user": user}
+    return {"status": "error", "message": "Invalid email or password"}
+
+@app.get("/api/sessions/history/{user_id}")
+def get_history(user_id: str):
+    sessions = get_user_sessions(user_id)
+    return {"sessions": sessions}
+
 
 @app.get("/api/{session_id}/agents_research")
 def agents_research(session_id: str):
@@ -224,6 +287,18 @@ def agents_research(session_id: str):
         }
         send_slack_notification(question, votes, moderator_task.output.raw)
 
+        # Save to database
+        user_id = session.get("user_id", "")
+        if user_id:
+            save_session(
+                session_id=session_id,
+                user_id=user_id,
+                question=question,
+                context=context,
+                board_type=board_type,
+                votes=votes,
+                moderator_summary=moderator_task.output.raw[:2000]
+            )
 
         yield sse_event("complete", {"message": "Shadow Board session complete"})
 

@@ -41,6 +41,14 @@ const Index = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [boardType, setBoardType] = useState('tech');
+  const [user, setUser] = useState<any>(null);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
 
   const scrollToBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -131,7 +139,7 @@ const Index = () => {
       const res = await fetch(`${API_BASE}/api/session/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, context, board_type: boardType }),
+        body: JSON.stringify({ question, context, board_type: boardType,user_id: user?.user_id || '' }),
       });
       const data = await res.json();
       setSessionId(data.session);
@@ -153,6 +161,7 @@ const Index = () => {
     }
   };
 
+
   const submitHumanInput = async (text: string, targetAgent: string = 'all') => {
     if (!sessionId) return;
     setIsPaused(false);
@@ -167,7 +176,146 @@ const Index = () => {
       setError('Failed to send input.');
     }
   };
+  const handleLogin = async () => {
+    setAuthError('');
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: authEmail, password: authPassword }),
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            setUser(data.user);
+        } else {
+            setAuthError(data.message);
+        }
+    } catch {
+        setAuthError('Connection failed');
+    }
+};
 
+  const handleSignup = async () => {
+      setAuthError('');
+      try {
+          const res = await fetch(`${API_BASE}/api/auth/signup`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: authEmail, password: authPassword, name: authName }),
+          });
+          const data = await res.json();
+          if (data.status === 'success') {
+              setUser(data.user);
+          } else {
+              setAuthError(data.message);
+          }
+      } catch {
+          setAuthError('Connection failed');
+      }
+  };
+
+  const loadHistory = async () => {
+      if (!user) return;
+      try {
+          const res = await fetch(`${API_BASE}/api/sessions/history/${user.user_id}`);
+          const data = await res.json();
+          setHistory(data.sessions);
+          setShowHistory(true);
+      } catch {
+          setError('Failed to load history');
+      }
+  };
+  // Auth screen
+if (!user) {
+    return (
+        <div className="min-h-svh flex flex-col bg-grid-pattern">
+            <div className="flex-1 flex flex-col items-center justify-center px-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center mb-8"
+                >
+                    <h1 className="text-5xl md:text-7xl font-serif font-bold tracking-tight mb-4 gold-gradient-text">
+                        SHADOW BOARD
+                    </h1>
+                    <p className="text-muted-foreground text-sm">
+                        AI-Powered Executive Decision Simulation
+                    </p>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="w-full max-w-md"
+                >
+                    <div className="glass-card-strong rounded-xl p-6 md:p-8">
+                        <div className="flex gap-4 mb-6">
+                            <button
+                                onClick={() => setAuthMode('login')}
+                                className={`flex-1 py-2 text-sm font-semibold uppercase tracking-wider rounded-lg transition-all ${
+                                    authMode === 'login'
+                                        ? 'gold-gradient text-primary-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                Login
+                            </button>
+                            <button
+                                onClick={() => setAuthMode('signup')}
+                                className={`flex-1 py-2 text-sm font-semibold uppercase tracking-wider rounded-lg transition-all ${
+                                    authMode === 'signup'
+                                        ? 'gold-gradient text-primary-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                Sign Up
+                            </button>
+                        </div>
+
+                        {authMode === 'signup' && (
+                            <input
+                                value={authName}
+                                onChange={(e) => setAuthName(e.target.value)}
+                                placeholder="Your name"
+                                className="w-full bg-secondary/40 border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-colors mb-3 placeholder:text-muted-foreground/50"
+                            />
+                        )}
+
+                        <input
+                            value={authEmail}
+                            onChange={(e) => setAuthEmail(e.target.value)}
+                            placeholder="Email"
+                            type="email"
+                            className="w-full bg-secondary/40 border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-colors mb-3 placeholder:text-muted-foreground/50"
+                        />
+
+                        <input
+                            value={authPassword}
+                            onChange={(e) => setAuthPassword(e.target.value)}
+                            placeholder="Password"
+                            type="password"
+                            onKeyDown={(e) => e.key === 'Enter' && (authMode === 'login' ? handleLogin() : handleSignup())}
+                            className="w-full bg-secondary/40 border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-colors mb-4 placeholder:text-muted-foreground/50"
+                        />
+
+                        {authError && (
+                            <p className="text-destructive text-xs mb-3">{authError}</p>
+                        )}
+
+                        <button
+                            onClick={authMode === 'login' ? handleLogin : handleSignup}
+                            className="w-full py-3 rounded-lg gold-gradient text-primary-foreground font-bold uppercase tracking-wider text-sm hover:opacity-90 transition-all"
+                        >
+                            {authMode === 'login' ? 'Login' : 'Create Account'}
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+            <AppFooter />
+        </div>
+    );
+}
   const agentCount = new Set(messages.map(m => m.agent)).size;
   const roundCount = new Set(messages.filter(m => m.round).map(m => m.round)).size;
 
@@ -176,12 +324,79 @@ const Index = () => {
     return (
       <div className="min-h-svh flex flex-col bg-grid-pattern">
         {/* Top bar */}
-        <div className="flex justify-end p-4 md:p-6">
-          <div className="flex items-center gap-2 glass-card rounded-full px-4 py-2">
+        <div className="flex justify-end p-4 md:p-6 gap-3">
+        <span className="flex items-center gap-2 glass-card rounded-full px-4 py-2 text-[10px] font-mono text-muted-foreground">
+            Welcome, {user.name}
+        </span>
+        <button
+            onClick={loadHistory}
+            className="flex items-center gap-2 glass-card rounded-full px-4 py-2 hover:bg-primary/10 transition-colors"
+        >
+            <FileText size={14} className="text-primary" />
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Past Sessions</span>
+        </button>
+        <button
+            onClick={() => setUser(null)}
+            className="flex items-center gap-2 glass-card rounded-full px-4 py-2 hover:bg-destructive/10 transition-colors"
+        >
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Logout</span>
+        </button>
+        <div className="flex items-center gap-2 glass-card rounded-full px-4 py-2">
             <Shield size={14} className="text-primary" />
             <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Powered by AIRIA</span>
-          </div>
         </div>
+        </div>
+
+      {showHistory && (
+    <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-4xl mx-auto px-6 mb-8">
+        <div className="glass-card-strong rounded-xl p-6">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="font-serif text-xl font-bold gold-gradient-text">Past Sessions</h2>
+                <button
+                    onClick={() => setShowHistory(false)}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                    ✕ Close
+                </button>
+            </div>
+            {history.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No past sessions yet.</p>
+            ) : (
+                <div className="space-y-3">
+                    {history.map((s: any) => (
+                        <div
+                            key={s.session_id}
+                            className="glass-card rounded-lg p-4 hover:bg-primary/5 transition-colors cursor-pointer"
+                            onClick={() => {
+                                setQuestion(s.question);
+                                setContext(s.context || '');
+                                setBoardType(s.board_type || 'tech');
+                                setShowHistory(false);
+                            }}
+                        >
+                            <p className="text-sm font-medium text-foreground mb-2">{s.question}</p>
+                            <div className="flex gap-3 text-xs text-muted-foreground flex-wrap">
+                                <span className="uppercase font-mono">{s.board_type}</span>
+                                {Object.entries(s.votes || {}).map(([agent, vote]: [string, any]) => (
+                                    <span key={agent} className={`${
+                                        vote === 'GO' ? 'text-cmo' :
+                                        vote === 'NO-GO' ? 'text-devil' : 'text-legal'
+                                    }`}>
+                                        {agent}: {vote}
+                                    </span>
+                                ))}
+                                <span>{new Date(s.created_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    </motion.div>
+)}
 
         {/* Hero */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
