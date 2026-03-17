@@ -261,7 +261,7 @@ async def speech_to_text(file: UploadFile = File(...)):
 
 AIRIA_EMBED_API = "https://embed-api.airia.ai"
 AIRIA_PIPELINE_ID = "40951b30-cb9f-4560-ae8c-1894e86af50d"
-AIRIA_WIDGET_API_KEY = "ak-MjEzOTk3NDgzNXwxNzczNzMzNzI5NjY3fHRpLVUyRjFjbUZpYUMxUGNHVnVJRkpsWjJsemRISmhkR2x2YmkxQmFYSnBZU0JHY21WbHwxfDY2NzA3ODc2OCAg"
+AIRIA_WIDGET_API_KEY = os.getenv("AIRIA_WIDGET_API_KEY", "").strip()
 
 class ChatRequest(BaseModel):
     message: str
