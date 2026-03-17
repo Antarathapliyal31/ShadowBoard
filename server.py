@@ -16,7 +16,7 @@ import io
 from fastapi import UploadFile, File
 from agents_creation import set_board_expertise
 from database import signup_user, login_user, save_session, get_user_sessions
-import google.generativeai as genai
+import google.genai as genai
 
 
 
@@ -405,15 +405,36 @@ def airia_chat(request: ChatRequest):
         except Exception:
             continue
 
-    # Fallback: use Gemini (what Shadow Board already uses)
-    # Fallback: use Gemini
-    # Fallback: use Gemini
     try:
-        
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        model = genai.GenerativeModel("gemini-2.0-flash")
-        prompt = "You are the AIRIA Assistant for Shadow Board — an AI-powered executive decision simulation platform. Shadow Board features 5 AI agents (CFO, CMO, Legal, Devils Advocate, Moderator) that debate strategic business decisions in 3 rounds with human-in-the-loop. Built with CrewAI, Gemini API, FastAPI, React. Be concise. User question: " + request.message
-        response = model.generate_content(prompt)
+        from google import genai
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        prompt = """You are the AIRIA Assistant for Shadow Board — an AI-powered executive decision simulation platform. 
+
+Shadow Board lets users simulate a boardroom debate with 5 AI agents:
+- CFO: Analyzes financial impact, costs, ROI, and revenue projections
+- CMO: Evaluates market demand, competition, customer needs, and growth strategy
+- Legal Counsel: Assesses regulatory risks, compliance requirements, and legal exposure
+- Devil's Advocate: Challenges every agent's assumptions with counter-evidence
+- Board Moderator: Synthesizes the debate into a final strategy brief
+
+Key Features:
+- 3 rounds of structured debate where agents challenge each other by name
+- Human-in-the-loop: users can intervene and target specific agents with questions
+- Real-time web search: agents use live data, not just training knowledge
+- Board presets: Tech, Healthcare, Finance, Retail — agents become domain experts
+- Document upload: agents analyze uploaded PDFs and reference specific data
+- PDF strategy brief with executive summary, board vote, risk matrix, and options
+- Slack notifications when debate completes
+- Session history: compare past board decisions side by side
+- Voice input using OpenAI Whisper
+- Supabase authentication for personalized experience
+
+Give helpful, detailed answers about Shadow Board. Explain features clearly. If asked how to use it, walk them through the steps. User question: """ + request.message
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
         return {"reply": response.text}
     except Exception as e:
+        print(f"Gemini fallback error: {e}")
         return {"reply": "I'm having trouble connecting right now. Please try again."}
