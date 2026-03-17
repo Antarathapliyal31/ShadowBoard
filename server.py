@@ -16,11 +16,7 @@ import io
 from fastapi import UploadFile, File
 from agents_creation import set_board_expertise
 from database import signup_user, login_user, save_session, get_user_sessions
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
 
 
 from agents_creation import (
@@ -89,7 +85,6 @@ def validate_question(question: str) -> str:
     return question
 
 @app.post("/api/session/create")
-@limiter.limit("5/minute")
 def session_id_creation(request: SessionRequest):
     session_id = str(uuid.uuid4())
     sessions_info[session_id] = {"question": request.question,"context":request.context,"board_type": request.board_type,"user_id": request.user_id}

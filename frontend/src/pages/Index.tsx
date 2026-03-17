@@ -49,6 +49,8 @@ const Index = () => {
   const [authError, setAuthError] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
+  const [compareSession, setCompareSession] = useState<any>(null);
+  const [compareWith, setCompareWith] = useState<any>(null);
 
   const scrollToBottom = useCallback(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -367,33 +369,108 @@ if (!user) {
             ) : (
                 <div className="space-y-3">
                     {history.map((s: any) => (
-                        <div
-                            key={s.session_id}
-                            className="glass-card rounded-lg p-4 hover:bg-primary/5 transition-colors cursor-pointer"
-                            onClick={() => {
-                                setQuestion(s.question);
-                                setContext(s.context || '');
-                                setBoardType(s.board_type || 'tech');
-                                setShowHistory(false);
-                            }}
-                        >
-                            <p className="text-sm font-medium text-foreground mb-2">{s.question}</p>
-                            <div className="flex gap-3 text-xs text-muted-foreground flex-wrap">
-                                <span className="uppercase font-mono">{s.board_type}</span>
-                                {Object.entries(s.votes || {}).map(([agent, vote]: [string, any]) => (
-                                    <span key={agent} className={`${
-                                        vote === 'GO' ? 'text-cmo' :
-                                        vote === 'NO-GO' ? 'text-devil' : 'text-legal'
-                                    }`}>
-                                        {agent}: {vote}
-                                    </span>
-                                ))}
-                                <span>{new Date(s.created_at).toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                    ))}
+                  <div
+                      key={s.session_id}
+                      className="glass-card rounded-lg p-4 hover:bg-primary/5 transition-colors"
+                  >
+                      <div className="flex justify-between items-start mb-2">
+                          <p className="text-sm font-medium text-foreground flex-1">{s.question}</p>
+                          <span className="text-[10px] font-mono text-muted-foreground ml-2">
+                              {new Date(s.created_at).toLocaleDateString()}
+                          </span>
+                      </div>
+                      <div className="flex gap-2 text-xs mb-3 flex-wrap">
+                          <span className="uppercase font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-muted/50">
+                              {s.board_type}
+                          </span>
+                          {Object.entries(s.votes || {}).map(([agent, vote]: [string, any]) => (
+                              <span key={agent} className={`px-2 py-0.5 rounded-full ${
+                                  vote === 'GO' ? 'bg-cmo/10 text-cmo' :
+                                  vote === 'NO-GO' ? 'bg-devil/10 text-devil' : 'bg-legal/10 text-legal'
+                              }`}>
+                                  {agent}: {vote}
+                              </span>
+                          ))}
+                      </div>
+                      {s.moderator_summary && (
+                          <details className="text-xs text-muted-foreground">
+                              <summary className="cursor-pointer hover:text-foreground transition-colors font-mono uppercase tracking-wider mb-2">
+                                  View Strategy Brief
+                              </summary>
+                              <div className="bg-secondary/30 rounded-lg p-3 mt-1 text-foreground/70 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                                  {s.moderator_summary}
+                              </div>
+                          </details>
+                      )}
+                      <div className="flex gap-2 mt-3">
+                          <button
+                              onClick={() => {
+                                  setQuestion(s.question);
+                                  setContext(s.context || '');
+                                  setBoardType(s.board_type || 'tech');
+                                  setShowHistory(false);
+                              }}
+                              className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
+                          >
+                              Re-run this question
+                          </button>
+                          <button
+                              onClick={() => {
+                                  if (compareSession && compareSession.session_id !== s.session_id) {
+                                      setCompareWith(s);
+                                  } else {
+                                      setCompareSession(s);
+                                  }
+                              }}
+                              className="text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-all"
+                          >
+                              {compareSession?.session_id === s.session_id ? '✓ Selected' : 'Compare'}
+                          </button>
+                      </div>
+                  </div>
+              ))}
                 </div>
             )}
+            {compareSession && compareWith && (
+    <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-6 border-t border-border/30 pt-6"
+    >
+        <div className="flex justify-between items-center mb-4">
+            <h3 className="font-serif text-lg font-bold gold-gradient-text">
+                Session Comparison
+            </h3>
+            <button
+                onClick={() => { setCompareSession(null); setCompareWith(null); }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+            >
+                ✕ Clear comparison
+            </button>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+            {[compareSession, compareWith].map((s: any, idx: number) => (
+                <div key={idx} className="glass-card rounded-lg p-4">
+                    <p className="text-sm font-medium text-foreground mb-3">
+                        {s.question}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                        {Object.entries(s.votes || {}).map(([agent, vote]: [string, any]) => (
+                            <span key={agent} className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                vote === 'GO' ? 'bg-cmo/10 text-cmo' :
+                                vote === 'NO-GO' ? 'bg-devil/10 text-devil' : 'bg-legal/10 text-legal'
+                            }`}>
+                                {agent}: {vote}
+                            </span>
+                        ))}
+                    </div>
+                    <div className="text-xs text-muted-foreground whitespace-pre-wrap max-h-64 overflow-y-auto bg-secondary/30 rounded-lg p-3">
+                        {s.moderator_summary || 'No summary available'}
+                    </div>
+                </div>
+            ))}
+        </div>
+        </motion.div>)}
         </div>
     </motion.div>
 )}
@@ -593,6 +670,8 @@ if (!user) {
                 setBoardType('tech');
                 setUploadedFile(null);    
                 setError(null);
+                setCompareSession(null);
+                setCompareWith(null);
                 eventSourceRef.current?.close();
             }}
               className="mt-6 px-6 py-3 rounded-lg border border-primary/30 text-primary font-semibold uppercase tracking-wider text-sm hover:bg-primary/10 transition-all">
