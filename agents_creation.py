@@ -9,7 +9,7 @@ import os
 # SETUP — runs once when this file is imported
 # ═══════════════════════════════════════════════
 
-gemini = LLM(model="gemini/gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY"))
+llm = LLM(model="openai/gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
 serper = SerperDevTool(api_key=os.getenv("SERPER_API_KEY"))
 
 # ═══════════════════════════════════════════════
@@ -22,7 +22,7 @@ CFO_agent = Agent(
     backstory="""Act as a senior level financial analyst who has 10 years of experience 
     in this field and has worked in many startups. Provide your viewpoint regarding 
     financial analysis (revenue, cost, ROI)""",
-    tools=[serper], llm=gemini, verbose=True
+    tools=[serper], llm=llm, verbose=True
 )
 
 CMO_agent = Agent(
@@ -31,7 +31,7 @@ CMO_agent = Agent(
     backstory="""Act as a senior level marketing analysis expert who has 10 years of 
     experience in this field and has worked in many startups. Provide your viewpoint 
     regarding marketing analysis (customer needs, market demand, competition)""",
-    tools=[serper], llm=gemini, verbose=True
+    tools=[serper], llm=llm, verbose=True
 )
 
 Legal_agent = Agent(
@@ -40,7 +40,7 @@ Legal_agent = Agent(
     backstory="""Act as a senior level legal expert who has 10 years of experience 
     and has worked in many high-level firms as legal analyst. Provide your viewpoint 
     regarding legal analysis (regulatory compliance, risk assessment)""",
-    tools=[serper], llm=gemini, verbose=True
+    tools=[serper], llm=llm, verbose=True
 )
 
 Devils_Advocate_agent = Agent(
@@ -48,7 +48,7 @@ Devils_Advocate_agent = Agent(
     goal="Challenge every other agent's assumptions and provide critical feedback",
     backstory="""Act as a senior level expert in running a global level company who 
     has knowledge of legal, marketing and financial aspects with 10 years of experience""",
-    tools=[serper], llm=gemini, verbose=True
+    tools=[serper], llm=llm, verbose=True
 )
 
 moderator_agent = Agent(
@@ -57,7 +57,7 @@ moderator_agent = Agent(
     backstory="""Act as a senior level expert in running a global level company who 
     has knowledge of legal, marketing and financial aspects with 20 years of experience. 
     You are perfectly neutral and never take sides.""",
-    llm=gemini, verbose=True
+    llm=llm, verbose=True
 )
 
 def parse_vote(task):

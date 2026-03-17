@@ -1,16 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, Send, SkipForward, Mic } from 'lucide-react';
+import { MessageSquare, Send, SkipForward, Mic, MicOff } from 'lucide-react';
 
 interface HumanInputPanelProps {
   onSubmit: (text: string) => void;
   onSkip: () => void;
 }
 
+const SpeechRecognition =
+  (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
 const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) => {
   const [input, setInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+    };
+  }, []);
+
+  const toggleVoice = () => {
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognitionRef.current = recognition;
+
+    let finalTranscript = input;
+
+    recognition.onresult = (event: any) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += (finalTranscript ? ' ' : '') + transcript;
+        } else {
+          interim = transcript;
+        }
+      }
+      setInput(finalTranscript + (interim ? ' ' + interim : ''));
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+    setIsListening(true);
+  };
 
   const handleSubmit = () => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
     onSubmit(input);
     setInput('');
   };
@@ -34,7 +92,7 @@ const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) =
         </h2>
       </div>
       <p className="text-muted-foreground text-sm mb-5">
-        Ask the board a question or challenge their reasoning to shape the next round of deliberation.
+        Ask the board a question or challenge their reasoning. You can type or use the mic to speak.
       </p>
       <div className="relative mb-5">
         <input
@@ -42,13 +100,32 @@ const HumanInputPanel: React.FC<HumanInputPanelProps> = ({ onSubmit, onSkip }) =
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          placeholder="Ask the board a question or challenge their reasoning..."
-          className="w-full bg-secondary/50 border border-border rounded-lg px-4 py-4 pr-12 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground/50"
+          placeholder={isListening ? 'Listening...' : 'Ask the board a question or challenge their reasoning...'}
+          className={`w-full bg-secondary/50 border rounded-lg px-4 py-4 pr-12 text-sm text-foreground focus:outline-none transition-colors placeholder:text-muted-foreground/50 ${
+            isListening ? 'border-primary/60 bg-primary/5' : 'border-border focus:border-primary/50'
+          }`}
         />
-        <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground transition-colors" title="Voice input (coming soon)">
-          <Mic size={18} />
+        <button
+          onClick={toggleVoice}
+          className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${
+            isListening
+              ? 'text-primary animate-pulse'
+              : 'text-muted-foreground/40 hover:text-muted-foreground'
+          }`}
+          title={isListening ? 'Stop listening' : 'Start voice input'}
+        >
+          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
         </button>
       </div>
+      {isListening && (
+        <div className="flex items-center gap-2 mb-4 text-xs text-primary">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+          </span>
+          Listening... speak now
+        </div>
+      )}
       <div className="flex gap-3">
         <button
           onClick={handleSubmit}

@@ -215,3 +215,116 @@ def human_input_endpoint(session_id: str, request: HumanInput):
     session_info = sessions_info[session_id]
     session_info["human_input"] = request.human_ip
     return {"status": "received"}
+
+
+# ═══════════════════════════════════════════════
+# SPEECH-TO-TEXT (OpenAI Whisper API)
+# ═══════════════════════════════════════════════
+
+from openai import OpenAI
+import os
+import tempfile
+
+@app.post("/api/speech-to-text")
+async def speech_to_text(file: UploadFile = File(...)):
+    """Transcribe audio to text using OpenAI Whisper API."""
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if not openai_key:
+        return {"error": "OPENAI_API_KEY not configured"}
+
+    content = await file.read()
+
+    # Write to temp file (Whisper needs a file path)
+    suffix = os.path.splitext(file.filename or "audio.webm")[1] or ".webm"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    try:
+        client = OpenAI(api_key=openai_key)
+        with open(tmp_path, "rb") as audio_file:
+            transcript = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                language="en",
+            )
+        return {"text": transcript.text}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        os.unlink(tmp_path)
+
+
+# ═══════════════════════════════════════════════
+# AIRIA CHAT WIDGET PROXY
+# ═══════════════════════════════════════════════
+
+AIRIA_EMBED_API = "https://embed-api.airia.ai"
+AIRIA_PIPELINE_ID = "40951b30-cb9f-4560-ae8c-1894e86af50d"
+AIRIA_WIDGET_API_KEY = "ak-MjEzOTk3NDgzNXwxNzczNzMzNzI5NjY3fHRpLVUyRjFjbUZpYUMxUGNHVnVJRkpsWjJsemRISmhkR2x2YmkxQmFYSnBZU0JHY21WbHwxfDY2NzA3ODc2OCAg"
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list = []
+
+@app.post("/api/chat")
+def airia_chat(request: ChatRequest):
+    """Proxy chat messages to AIRIA pipeline via OpenAI-compatible endpoint."""
+    import requests as http_requests
+
+    messages = []
+    for msg in request.history:
+        messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+    messages.append({"role": "user", "content": request.message})
+
+    # Try the OpenAI-compatible endpoint that AIRIA exposes
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {AIRIA_WIDGET_API_KEY}",
+        "X-API-Key": AIRIA_WIDGET_API_KEY,
+    }
+
+    # Use the OpenAI-compatible chat completions format
+    payload = {
+        "model": AIRIA_PIPELINE_ID,
+        "messages": messages,
+    }
+
+    # Try multiple endpoint patterns
+    endpoints = [
+        f"{AIRIA_EMBED_API}/v1/chat/completions",
+        f"{AIRIA_EMBED_API}/api/v1/chat/completions",
+        f"{AIRIA_EMBED_API}/chat/completions",
+    ]
+
+    for url in endpoints:
+        try:
+            resp = http_requests.post(url, headers=headers, json=payload, timeout=60)
+            if resp.status_code == 200:
+                data = resp.json()
+                reply = (
+                    data.get("choices", [{}])[0].get("message", {}).get("content")
+                    or data.get("result")
+                    or data.get("response")
+                    or str(data)
+                )
+                return {"reply": reply}
+        except Exception:
+            continue
+
+    # Fallback: use OpenAI directly with the same key used by CrewAI agents
+    try:
+        openai_key = os.getenv("OPENAI_API_KEY")
+        if openai_key:
+            client = OpenAI(api_key=openai_key)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a helpful AI assistant for the Shadow Board platform — an AI-powered executive decision simulation tool built for the AIRIA AI Agent Challenge. Help users understand how Shadow Board works, answer questions about strategic decision-making, and provide general assistance. Be concise and professional."},
+                    *messages,
+                ],
+                max_tokens=500,
+            )
+            return {"reply": response.choices[0].message.content}
+    except Exception as e:
+        return {"reply": f"I'm having trouble connecting right now. Please try again. ({str(e)[:100]})"}

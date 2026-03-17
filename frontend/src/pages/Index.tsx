@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, AlertCircle, Shield, CheckCircle2, Users, MessageSquare, FileText } from 'lucide-react';
+import { ChevronRight, AlertCircle, Shield, CheckCircle2, Users, MessageSquare, FileText, Mic, MicOff } from 'lucide-react';
 import PhaseIndicator from '@/components/PhaseIndicator';
 import MessageCard, { type AgentMessage } from '@/components/MessageCard';
 import HumanInputPanel from '@/components/HumanInputPanel';
 import TypingIndicator from '@/components/TypingIndicator';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -35,6 +36,10 @@ const Index = () => {
   const [isStarting, setIsStarting] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [thinkingAgent, setThinkingAgent] = useState<string | null>(null);
+
+  const voiceQuestion = useSpeechRecognition(
+    useCallback((text: string) => setQuestion((prev) => prev + (prev ? ' ' : '') + text), [])
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -91,10 +96,26 @@ const Index = () => {
       } catch { /* ignore */ }
     });
 
-    es.addEventListener('pause', () => {
+    es.addEventListener('pause', (e) => {
+      try { JSON.parse(e.data); } catch { /* ignore */ }
       setIsPaused(true);
       setIsThinking(false);
       setCurrentPhase(2); // HITL phase
+    });
+
+    es.addEventListener('heartbeat', () => {
+      // Keep connection alive while waiting for human input
+    });
+
+    es.addEventListener('brief_ready', (e) => {
+      try { JSON.parse(e.data); } catch { /* ignore */ }
+    });
+
+    es.addEventListener('error', (e) => {
+      try {
+        const data = JSON.parse((e as MessageEvent).data);
+        setError(data.message || 'Pipeline error occurred.');
+      } catch { /* ignore */ }
     });
 
     es.addEventListener('complete', () => {
@@ -104,11 +125,12 @@ const Index = () => {
     });
 
     es.onerror = () => {
-      if (!isComplete) {
+      // Only show error if stream wasn't intentionally closed
+      if (es.readyState !== EventSource.CLOSED) {
         setError('Connection to Board lost. Attempting to reconnect...');
       }
     };
-  }, [isComplete]);
+  }, []);
 
   const startDebate = async () => {
     if (!question.trim()) return;
@@ -142,16 +164,20 @@ const Index = () => {
 
   const submitHumanInput = async (text: string) => {
     if (!sessionId) return;
-    setIsPaused(false);
-    setIsThinking(true);
     try {
-      await fetch(`${API_BASE}/api/${sessionId}/human_input`, {
+      const response = await fetch(`${API_BASE}/api/${sessionId}/human_input`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ human_ip: text }),
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      // Only update state after backend confirms receipt
+      setIsPaused(false);
+      setIsThinking(true);
     } catch {
-      setError('Failed to send input.');
+      setError('Failed to send input. Please try again.');
     }
   };
 
@@ -193,12 +219,39 @@ const Index = () => {
             className="w-full max-w-2xl"
           >
             <div className="glass-card-strong rounded-xl p-6 md:p-8">
-              <textarea
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="What strategic decision should the board analyze?"
-                className="w-full bg-secondary/40 border border-border rounded-lg p-4 text-sm md:text-base text-foreground focus:outline-none focus:border-primary/40 transition-colors resize-none h-32 placeholder:text-muted-foreground/50"
-              />
+              <div className="relative">
+                <textarea
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder={voiceQuestion.isListening ? 'Listening... speak your strategic question' : 'What strategic decision should the board analyze?'}
+                  className={`w-full bg-secondary/40 border rounded-lg p-4 pr-12 text-sm md:text-base text-foreground focus:outline-none transition-colors resize-none h-32 placeholder:text-muted-foreground/50 ${
+                    voiceQuestion.isListening ? 'border-primary/60 bg-primary/5' : 'border-border focus:border-primary/40'
+                  }`}
+                />
+                {voiceQuestion.supported && (
+                  <button
+                    type="button"
+                    onClick={voiceQuestion.toggle}
+                    className={`absolute right-3 top-3 p-1.5 rounded-full transition-all ${
+                      voiceQuestion.isListening
+                        ? 'text-primary bg-primary/10 animate-pulse'
+                        : 'text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary/50'
+                    }`}
+                    title={voiceQuestion.isListening ? 'Stop listening' : 'Speak your question'}
+                  >
+                    {voiceQuestion.isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                  </button>
+                )}
+                {voiceQuestion.isListening && (
+                  <div className="absolute bottom-2 left-4 flex items-center gap-2 text-xs text-primary">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                    </span>
+                    Listening...
+                  </div>
+                )}
+              </div>
 
               <textarea
                 value={context}

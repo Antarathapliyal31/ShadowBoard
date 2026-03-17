@@ -165,6 +165,131 @@
   color: white;
 }
 
+/* ── AIRIA Chat Widget Markdown ── */
+.airia-markdown {
+  font-size: 13px;
+  line-height: 1.65;
+  color: hsl(210, 40%, 92%);
+}
+
+.airia-markdown p {
+  margin: 0 0 0.5em 0;
+}
+
+.airia-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.airia-markdown strong {
+  color: hsl(40, 52%, 72%);
+  font-weight: 600;
+}
+
+.airia-markdown em {
+  color: hsl(210, 40%, 80%);
+  font-style: italic;
+}
+
+.airia-markdown ul, .airia-markdown ol {
+  margin: 0.4em 0;
+  padding-left: 1.4em;
+}
+
+.airia-markdown li {
+  margin: 0.2em 0;
+}
+
+.airia-markdown li::marker {
+  color: hsl(40, 52%, 58%);
+}
+
+.airia-markdown code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85em;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background: hsla(222, 47%, 20%, 0.8);
+  border: 1px solid hsla(210, 40%, 98%, 0.06);
+  color: hsl(40, 52%, 72%);
+}
+
+.airia-markdown pre {
+  margin: 0.6em 0;
+  padding: 0.75em 1em;
+  border-radius: 8px;
+  background: hsla(222, 47%, 8%, 0.7);
+  border: 1px solid hsla(210, 40%, 98%, 0.06);
+  overflow-x: auto;
+}
+
+.airia-markdown pre code {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.82em;
+  color: hsl(210, 40%, 85%);
+}
+
+.airia-markdown h1, .airia-markdown h2, .airia-markdown h3,
+.airia-markdown h4, .airia-markdown h5, .airia-markdown h6 {
+  font-family: 'Inter', sans-serif;
+  color: hsl(40, 52%, 72%);
+  font-weight: 600;
+  margin: 0.6em 0 0.3em 0;
+  line-height: 1.3;
+}
+
+.airia-markdown h1 { font-size: 1.1em; }
+.airia-markdown h2 { font-size: 1.05em; }
+.airia-markdown h3 { font-size: 1em; }
+
+.airia-markdown blockquote {
+  margin: 0.5em 0;
+  padding: 0.4em 0.8em;
+  border-left: 3px solid hsla(40, 52%, 58%, 0.4);
+  background: hsla(40, 52%, 58%, 0.04);
+  border-radius: 0 6px 6px 0;
+  color: hsl(210, 40%, 80%);
+}
+
+.airia-markdown hr {
+  border: none;
+  border-top: 1px solid hsla(210, 40%, 98%, 0.08);
+  margin: 0.8em 0;
+}
+
+.airia-markdown a {
+  color: hsl(40, 52%, 65%);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.airia-markdown a:hover {
+  color: hsl(40, 52%, 75%);
+}
+
+.airia-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  font-size: 0.85em;
+}
+
+.airia-markdown th {
+  background: hsla(40, 52%, 58%, 0.08);
+  border: 1px solid hsla(40, 52%, 58%, 0.15);
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 600;
+  color: hsl(40, 52%, 68%);
+  font-size: 0.9em;
+}
+
+.airia-markdown td {
+  border: 1px solid hsla(40, 52%, 58%, 0.1);
+  padding: 6px 10px;
+}
+
 .prose table {
   width: 100%;
   border-collapse: collapse;
