@@ -16,6 +16,7 @@ import io
 from fastapi import UploadFile, File
 from agents_creation import set_board_expertise
 from database import signup_user, login_user, save_session, get_user_sessions
+import google.generativeai as genai
 
 
 
@@ -350,8 +351,9 @@ async def speech_to_text(file: UploadFile = File(...)):
 # AIRIA CHAT WIDGET PROXY
 # ═══════════════════════════════════════════════
 
-AIRIA_EMBED_API = "https://embed-api.airia.ai"
-AIRIA_PIPELINE_ID = "40951b30-cb9f-4560-ae8c-1894e86af50d"
+
+AIRIA_EMBED_API = os.getenv("AIRIA_EMBED_API", "").strip()
+AIRIA_PIPELINE_ID = os.getenv("AIRIA_PIPELINE_ID", "").strip()
 AIRIA_WIDGET_API_KEY = os.getenv("AIRIA_WIDGET_API_KEY", "").strip()
 
 class ChatRequest(BaseModel):
@@ -403,19 +405,15 @@ def airia_chat(request: ChatRequest):
         except Exception:
             continue
 
-    # Fallback: use OpenAI directly with the same key used by CrewAI agents
+    # Fallback: use Gemini (what Shadow Board already uses)
+    # Fallback: use Gemini
+    # Fallback: use Gemini
     try:
-        openai_key = os.getenv("OPENAI_API_KEY")
-        if openai_key:
-            client = OpenAI(api_key=openai_key)
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are a helpful AI assistant for the Shadow Board platform — an AI-powered executive decision simulation tool built for the AIRIA AI Agent Challenge. Help users understand how Shadow Board works, answer questions about strategic decision-making, and provide general assistance. Be concise and professional."},
-                    *messages,
-                ],
-                max_tokens=500,
-            )
-            return {"reply": response.choices[0].message.content}
+        
+        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        prompt = "You are the AIRIA Assistant for Shadow Board — an AI-powered executive decision simulation platform. Shadow Board features 5 AI agents (CFO, CMO, Legal, Devils Advocate, Moderator) that debate strategic business decisions in 3 rounds with human-in-the-loop. Built with CrewAI, Gemini API, FastAPI, React. Be concise. User question: " + request.message
+        response = model.generate_content(prompt)
+        return {"reply": response.text}
     except Exception as e:
-        return {"reply": f"I'm having trouble connecting right now. Please try again. ({str(e)[:100]})"}
+        return {"reply": "I'm having trouble connecting right now. Please try again."}
