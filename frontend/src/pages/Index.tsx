@@ -7,7 +7,7 @@ import HumanInputPanel from '@/components/HumanInputPanel';
 import TypingIndicator from '@/components/TypingIndicator';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://shadowboard-ahyi.onrender.com';
 
 const PHASE_MAP: Record<string, number> = {
   research: 0,
