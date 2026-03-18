@@ -17,7 +17,7 @@ from fastapi import UploadFile, File
 from agents_creation import set_board_expertise
 from database import signup_user, login_user, save_session, get_user_sessions
 import google.genai as genai
-
+from memory import get_relevant_memories, save_debate_memory
 
 
 from agents_creation import (
@@ -152,11 +152,31 @@ def agents_research(session_id: str):
     board_type = session.get("board_type", "tech")
     set_board_expertise(board_type)
     file_context = session.get("file_context", "")
+    user_id = session.get("user_id", "")
+    try:
+        past_insights = get_relevant_memories(user_id, question)
+        print(f"=== SUPERMEMORY ===")
+        print(f"Past insights found: {len(past_insights)} characters")
+        if past_insights:
+            print(f"Past insights preview: {past_insights[:300]}")
+        else:
+            print("No past insights found")
+        print(f"===================")
+    except Exception as e:
+        print(f"Memory retrieval error: {e}")
+        past_insights = ""
+    # Build full question with ALL context
+    full_question = question
+    
+    if context:
+        full_question += f"\n\nCOMPANY CONTEXT: {context}"
+    
     if file_context:
-        full_question = f"{question}\n\nCOMPANY CONTEXT: {context}\n\nUPLOADED DOCUMENT:\n{file_context[:3000]}"
-    else:
-        full_question = f"{question}\n\nCOMPANY CONTEXT: {context}" if context else question
-
+        full_question += f"\n\nUPLOADED DOCUMENT:\n{file_context[:3000]}"
+    
+    if past_insights:
+        full_question += f"\n\nINSTITUTIONAL MEMORY (past board decisions):\n{past_insights}\n\nUse these past board insights to inform your analysis. Reference past decisions where relevant."
+    
     def generate():
         # ═══ PHASE 1: RESEARCH (one agent at a time) ═══
         yield "retry: 120000\n\n"    
@@ -283,7 +303,7 @@ def agents_research(session_id: str):
         }
         send_slack_notification(question, votes, moderator_task.output.raw)
 
-        # Save to database
+        # Save to Supabase
         user_id = session.get("user_id", "")
         if user_id:
             save_session(
@@ -296,10 +316,16 @@ def agents_research(session_id: str):
                 moderator_summary=moderator_task.output.raw[:2000]
             )
 
+            # Save to Supermemory
+            try:
+                save_debate_memory(user_id, question, votes, moderator_task.output.raw, board_type)
+            except Exception as e:
+                print(f"Supermemory save error: {e}")
+
         yield sse_event("complete", {"message": "Shadow Board session complete"})
+    
 
     return StreamingResponse(generate(), media_type="text/event-stream")
-
 
 @app.post("/api/{session_id}/human_input")
 def human_input_endpoint(session_id: str, request: HumanInput):
@@ -428,8 +454,9 @@ Key Features:
 - Session history: compare past board decisions side by side
 - Voice input using OpenAI Whisper
 - Supabase authentication for personalized experience
+-Supermemory integration for institutional memory — agents remember past board decisions and reference them in future debates.
 
-Give helpful, detailed answers about Shadow Board. Explain features clearly. If asked how to use it, walk them through the steps. User question: """ + request.message
+Give helpful, detailed answers about Shadow Board in 4-5 lines. Explain features clearly. If asked how to use it, walk them through the steps. User question: """ + request.message
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt
