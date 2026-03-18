@@ -126,9 +126,13 @@ const Index = () => {
     });
 
     es.addEventListener('brief_ready', (e) => {
-      try { JSON.parse(e.data); } catch { /* ignore */ }
-    });
-
+      try {
+          const data = JSON.parse(e.data);
+          if (data.download_url) {
+              window.open(`${API_BASE}${data.download_url}`, '_blank');
+          }
+      } catch { /* ignore */ }
+});
     es.addEventListener('resume', () => {
       setIsPaused(false);
       setIsThinking(true);
