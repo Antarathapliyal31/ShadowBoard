@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://shadowboard-ahyi.onrender.com';
 
 export const useSpeechRecognition = (onTranscript: (text: string) => void) => {
   const [isListening, setIsListening] = useState(false);

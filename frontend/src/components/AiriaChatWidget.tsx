@@ -4,7 +4,7 @@ import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, RotateCcw } from 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://shadowboard-ahyi.onrender.com';
 
 interface ChatMessage {
   role: 'user' | 'assistant';

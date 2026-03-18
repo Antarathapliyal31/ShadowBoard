@@ -75,7 +75,7 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, index, sessionId }) 
           </div>
           <button 
           onClick={() => {
-            window.open(`http://localhost:8000/api/${sessionId}/download_pdf`, '_blank')
+            window.open(`https://shadowboard-ahyi.onrender.com/api/${sessionId}/download_pdf`, '_blank')
           }}
           className="mt-6 px-5 py-2.5 rounded-md bg-mod/20 text-mod text-xs font-semibold uppercase tracking-wider hover:bg-mod/30 transition-colors flex items-center gap-2"
         >
