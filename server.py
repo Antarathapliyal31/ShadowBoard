@@ -292,9 +292,12 @@ def agents_research(session_id: str):
         moderator_task = run_moderator(full_question, all_context_mod)
         yield sse_event("agent_message", {"agent": "Moderator", "phase": "synthesis", "text": moderator_task.output.raw})
         moderator_txt=moderator_task.output.raw
-        filepath=generate_strategy_brief_pdf(full_question,moderator_txt,session_id)
-        yield sse_event("brief_ready", {"download_url": f"/api/{session_id}/download_pdf"})
-
+        try:
+            filepath=generate_strategy_brief_pdf(full_question,moderator_txt,session_id)
+            yield sse_event("brief_ready", {"download_url": f"/api/{session_id}/download_pdf"})
+        except Exception as e:
+            print(f"PDF generation error: {e}")
+            yield sse_event("brief_ready", {"download_url": ""})
         votes = {
             "CFO": parse_vote(debate_cfo_3),
             "CMO": parse_vote(debate_cmo_3),
