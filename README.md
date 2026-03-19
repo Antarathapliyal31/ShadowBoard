@@ -86,28 +86,28 @@ Instead of relying on a single AI response, Shadow Board orchestrates a **multi-
 ## System Architecture
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Segoe UI, Arial', 'primaryTextColor': '#1e293b', 'lineColor': '#64748b' }}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Segoe UI, Arial', 'primaryTextColor': '#1e293b', 'lineColor': '#475569', 'edgeLabelBackground': '#f8fafc' }}}%%
 graph TB
     subgraph Frontend["Frontend · React + TypeScript + Vite"]
         direction LR
-        Auth["Auth Screen"]
-        Landing["Landing Page"]
-        Debate["Debate View"]
-        History["Session History"]
+        Auth["Auth Screen"]:::feNode
+        Landing["Landing Page"]:::feNode
+        Debate["Debate View"]:::feNode
+        History["Session History"]:::feNode
         Auth --> Landing --> Debate --> History
     end
 
     subgraph Backend["Backend · FastAPI + Python"]
         direction LR
-        AuthRoutes["Auth Routes"]
-        SessionMgr["Session Manager"]
-        DebateEngine["Debate Engine"]
-        PDFGen["PDF Generator"]
+        AuthRoutes["Auth Routes"]:::beNode
+        SessionMgr["Session Manager"]:::beNode
+        DebateEngine["Debate Engine"]:::beNode
+        PDFGen["PDF Generator"]:::beNode
     end
 
     subgraph Orchestration["Agent Orchestration · CrewAI"]
-        Agents["AI Agent Crew"]
-        Memory["Memory Engine"]
+        Agents["AI Agent Crew"]:::orchNode
+        Memory["Memory Engine"]:::orchNode
     end
 
     Frontend -->|"HTTP / SSE"| Backend
@@ -115,12 +115,12 @@ graph TB
     DebateEngine --> Memory
 
     subgraph External["External Services"]
-        Gemini["Google Gemini\n(LLM)"]
-        Serper["Serper\n(Web Search)"]
-        Supabase["Supabase\n(DB + Auth)"]
-        SuperMem["Supermemory\n(Institutional Memory)"]
-        Whisper["OpenAI Whisper\n(Speech-to-Text)"]
-        Slack["Slack\n(Notifications)"]
+        Gemini["Google Gemini\n(LLM)"]:::gemNode
+        Serper["Serper\n(Web Search)"]:::serpNode
+        Supabase["Supabase\n(DB + Auth)"]:::supaNode
+        SuperMem["Supermemory\n(Institutional Memory)"]:::smemNode
+        Whisper["OpenAI Whisper\n(Speech-to-Text)"]:::whisNode
+        Slack["Slack\n(Notifications)"]:::slackNode
     end
 
     Agents -->|"LLM Calls"| Gemini
@@ -131,16 +131,20 @@ graph TB
     PDFGen -->|"Notify"| Slack
     Frontend -->|"Voice Input"| Whisper
 
-    style Frontend fill:transparent,stroke:#0ea5e9,color:#1e293b,font-weight:bold,stroke-width:2px
-    style Backend fill:transparent,stroke:#22c55e,color:#1e293b,font-weight:bold,stroke-width:2px
-    style Orchestration fill:transparent,stroke:#eab308,color:#1e293b,font-weight:bold,stroke-width:2px
-    style External fill:transparent,stroke:#8b5cf6,color:#1e293b,font-weight:bold,stroke-width:2px
-    style Gemini fill:transparent,stroke:#3b82f6,color:#1e293b,font-weight:bold,stroke-width:2px
-    style Serper fill:transparent,stroke:#22c55e,color:#1e293b,font-weight:bold,stroke-width:2px
-    style Supabase fill:transparent,stroke:#10b981,color:#1e293b,font-weight:bold,stroke-width:2px
-    style SuperMem fill:transparent,stroke:#8b5cf6,color:#1e293b,font-weight:bold,stroke-width:2px
-    style Whisper fill:transparent,stroke:#6366f1,color:#1e293b,font-weight:bold,stroke-width:2px
-    style Slack fill:transparent,stroke:#f87171,color:#1e293b,font-weight:bold,stroke-width:2px
+    classDef feNode fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,font-weight:bold,stroke-width:2px
+    classDef beNode fill:#dcfce7,stroke:#16a34a,color:#14532d,font-weight:bold,stroke-width:2px
+    classDef orchNode fill:#fef3c7,stroke:#d97706,color:#78350f,font-weight:bold,stroke-width:2px
+    classDef gemNode fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a,font-weight:bold,stroke-width:2.5px
+    classDef serpNode fill:#bbf7d0,stroke:#16a34a,color:#14532d,font-weight:bold,stroke-width:2.5px
+    classDef supaNode fill:#a7f3d0,stroke:#059669,color:#064e3b,font-weight:bold,stroke-width:2.5px
+    classDef smemNode fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95,font-weight:bold,stroke-width:2.5px
+    classDef whisNode fill:#c7d2fe,stroke:#4f46e5,color:#312e81,font-weight:bold,stroke-width:2.5px
+    classDef slackNode fill:#fecaca,stroke:#dc2626,color:#7f1d1d,font-weight:bold,stroke-width:2.5px
+
+    style Frontend fill:#eff6ff,stroke:#2563eb,color:#1e3a8a,font-weight:bold,stroke-width:3px
+    style Backend fill:#f0fdf4,stroke:#16a34a,color:#14532d,font-weight:bold,stroke-width:3px
+    style Orchestration fill:#fffbeb,stroke:#d97706,color:#78350f,font-weight:bold,stroke-width:3px
+    style External fill:#f5f3ff,stroke:#7c3aed,color:#4c1d95,font-weight:bold,stroke-width:3px
 ```
 
 ---
@@ -150,7 +154,7 @@ graph TB
 > **Scenario:** *"Should Spotify acquire a podcast analytics company?"*
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '18px', 'fontFamily': 'Segoe UI, Arial', 'primaryTextColor': '#1e293b', 'lineColor': '#64748b' }}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '18px', 'fontFamily': 'Segoe UI, Arial', 'primaryTextColor': '#1e293b', 'lineColor': '#475569', 'edgeLabelBackground': '#f8fafc' }}}%%
 flowchart LR
     Q(["Should Spotify acquire\na podcast analytics company?"]):::qClass
 
@@ -169,16 +173,16 @@ flowchart LR
     V -->|"CMO"| COND["CONDITIONAL"]:::condClass
     V -->|"Legal"| NOGO["NO-GO"]:::nogoClass
 
-    classDef qClass fill:transparent,stroke:#eab308,color:#1e293b,font-weight:bold,font-size:17px,stroke-width:2px
-    classDef cfoClass fill:transparent,stroke:#3b82f6,color:#1e293b,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef cmoClass fill:transparent,stroke:#22c55e,color:#1e293b,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef legClass fill:transparent,stroke:#8b5cf6,color:#1e293b,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef daClass fill:transparent,stroke:#ef4444,color:#1e293b,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef modClass fill:transparent,stroke:#eab308,color:#1e293b,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef voteClass fill:transparent,stroke:#818cf8,color:#1e293b,font-weight:bold,font-size:17px,stroke-width:2px
-    classDef goClass fill:transparent,stroke:#22c55e,color:#1e293b,font-weight:bold,font-size:18px,stroke-width:3px
-    classDef condClass fill:transparent,stroke:#f59e0b,color:#1e293b,font-weight:bold,font-size:18px,stroke-width:3px
-    classDef nogoClass fill:transparent,stroke:#ef4444,color:#1e293b,font-weight:bold,font-size:18px,stroke-width:3px
+    classDef qClass fill:#fef3c7,stroke:#b45309,color:#78350f,font-weight:bold,font-size:17px,stroke-width:3px
+    classDef cfoClass fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef cmoClass fill:#dcfce7,stroke:#16a34a,color:#14532d,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef legClass fill:#ede9fe,stroke:#7c3aed,color:#4c1d95,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef daClass fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef modClass fill:#fef9c3,stroke:#ca8a04,color:#713f12,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef voteClass fill:#e0e7ff,stroke:#4f46e5,color:#312e81,font-weight:bold,font-size:17px,stroke-width:3px
+    classDef goClass fill:#bbf7d0,stroke:#15803d,color:#14532d,font-weight:bold,font-size:18px,stroke-width:4px
+    classDef condClass fill:#fef3c7,stroke:#d97706,color:#78350f,font-weight:bold,font-size:18px,stroke-width:4px
+    classDef nogoClass fill:#fecaca,stroke:#dc2626,color:#7f1d1d,font-weight:bold,font-size:18px,stroke-width:4px
 ```
 
 ---
@@ -186,92 +190,99 @@ flowchart LR
 ## Debate Flow & Phases
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Segoe UI, Arial', 'primaryTextColor': '#1e293b', 'lineColor': '#64748b' }}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Segoe UI, Arial', 'primaryTextColor': '#1e293b', 'lineColor': '#475569', 'edgeLabelBackground': '#f8fafc' }}}%%
 flowchart TD
     Start(["User Submits Question"]):::startClass
-    Start --> Upload["Upload Documents\n(PDF / DOCX / TXT)"]
-    Upload --> Board["Select Board Type\n(Tech / Healthcare / Finance / Retail)"]
+    Start --> Upload["Upload Documents\n(PDF / DOCX / TXT)"]:::inputClass
+    Upload --> Board["Select Board Type\n(Tech / Healthcare / Finance / Retail)"]:::inputClass
 
     Board --> P1
 
     subgraph P1["PHASE 1 · RESEARCH"]
         direction LR
-        R1["CFO Research\n(Web Search)"]
-        R2["CMO Research\n(Web Search)"]
-        R3["Legal Research\n(Web Search)"]
+        R1["CFO Research\n(Web Search)"]:::researchNode
+        R2["CMO Research\n(Web Search)"]:::researchNode
+        R3["Legal Research\n(Web Search)"]:::researchNode
     end
 
     P1 --> P2R1
 
     subgraph P2R1["PHASE 2 · ROUND 1 · OPENING STATEMENTS"]
         direction LR
-        S1["CFO\nPosition"]
-        S2["CMO\nPosition"]
-        S3["Legal\nPosition"]
-        S4["Devil's Advocate\nChallenges"]
+        S1["CFO\nPosition"]:::debateNode
+        S2["CMO\nPosition"]:::debateNode
+        S3["Legal\nPosition"]:::debateNode
+        S4["Devil's Advocate\nChallenges"]:::challengeNode
     end
 
     P2R1 --> HITL
 
     subgraph HITL["HUMAN-IN-THE-LOOP PAUSE"]
         direction TB
-        H1["Challenge a specific agent"]
-        H2["Ask follow-up questions"]
-        H3["Provide additional context"]
-        H4["Voice input via Whisper"]
-        H5["Skip to continue"]
+        H1["Challenge a specific agent"]:::hitlNode
+        H2["Ask follow-up questions"]:::hitlNode
+        H3["Provide additional context"]:::hitlNode
+        H4["Voice input via Whisper"]:::hitlNode
+        H5["Skip to continue"]:::hitlNode
     end
 
     HITL --> P2R2
 
     subgraph P2R2["PHASE 2 · ROUND 2 · REBUTTALS"]
         direction LR
-        RB1["CFO\nRebuttal"]
-        RB2["CMO\nRebuttal"]
-        RB3["Legal\nRebuttal"]
-        RB4["Devil's Advocate\nRebuttal"]
+        RB1["CFO\nRebuttal"]:::rebuttalNode
+        RB2["CMO\nRebuttal"]:::rebuttalNode
+        RB3["Legal\nRebuttal"]:::rebuttalNode
+        RB4["Devil's Advocate\nRebuttal"]:::challengeNode
     end
 
     P2R2 --> P2R3
 
     subgraph P2R3["PHASE 2 · ROUND 3 · FINAL POSITIONS"]
         direction LR
-        F1["CFO\nFinal Vote"]
-        F2["CMO\nFinal Vote"]
-        F3["Legal\nFinal Vote"]
-        F4["Devil's Advocate\nFinal Position"]
+        F1["CFO\nFinal Vote"]:::finalNode
+        F2["CMO\nFinal Vote"]:::finalNode
+        F3["Legal\nFinal Vote"]:::finalNode
+        F4["Devil's Advocate\nFinal Position"]:::challengeNode
     end
 
     P2R3 --> P3
 
     subgraph P3["PHASE 3 · MODERATOR SYNTHESIS"]
-        Mod["Reviews all 3 rounds\nWeighs positions & evidence\nGenerates executive recommendation"]:::modClass
+        Mod["Reviews all 3 rounds\nWeighs positions & evidence\nGenerates executive recommendation"]:::modNode
     end
 
     P3 --> Output
 
     subgraph Output["OUTPUTS"]
         direction LR
-        PDF["PDF Strategy\nBrief"]
-        DB["Supabase\nSession Saved"]
-        SL["Slack\nNotification"]
-        MEM["Supermemory\nStored"]
+        PDF["PDF Strategy\nBrief"]:::pdfNode
+        DB["Supabase\nSession Saved"]:::dbNode
+        SL["Slack\nNotification"]:::slkNode
+        MEM["Supermemory\nStored"]:::memNode
     end
 
-    classDef startClass fill:transparent,stroke:#eab308,color:#1e293b,font-weight:bold,font-size:17px,stroke-width:2px
-    classDef modClass fill:transparent,stroke:#eab308,color:#1e293b,font-weight:bold,stroke-width:2px
+    classDef startClass fill:#fef3c7,stroke:#b45309,color:#78350f,font-weight:bold,font-size:17px,stroke-width:3px
+    classDef inputClass fill:#f1f5f9,stroke:#475569,color:#1e293b,font-weight:bold,stroke-width:2px
+    classDef researchNode fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,font-weight:bold,stroke-width:2px
+    classDef debateNode fill:#dcfce7,stroke:#16a34a,color:#14532d,font-weight:bold,stroke-width:2px
+    classDef challengeNode fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,font-weight:bold,stroke-width:2px
+    classDef hitlNode fill:#fce7f3,stroke:#db2777,color:#831843,font-weight:bold,stroke-width:2px
+    classDef rebuttalNode fill:#fef3c7,stroke:#d97706,color:#78350f,font-weight:bold,stroke-width:2px
+    classDef finalNode fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,font-weight:bold,stroke-width:2px
+    classDef modNode fill:#fef9c3,stroke:#ca8a04,color:#713f12,font-weight:bold,stroke-width:3px
+    classDef pdfNode fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,font-weight:bold,stroke-width:2.5px
+    classDef dbNode fill:#d1fae5,stroke:#059669,color:#064e3b,font-weight:bold,stroke-width:2.5px
+    classDef slkNode fill:#fecaca,stroke:#dc2626,color:#7f1d1d,font-weight:bold,stroke-width:2.5px
+    classDef memNode fill:#ede9fe,stroke:#7c3aed,color:#4c1d95,font-weight:bold,stroke-width:2.5px
 
-    style P1 fill:transparent,stroke:#0ea5e9,color:#1e293b,font-weight:bold,stroke-width:2px
-    style P2R1 fill:transparent,stroke:#22c55e,color:#1e293b,font-weight:bold,stroke-width:2px
-    style HITL fill:transparent,stroke:#ec4899,color:#1e293b,font-weight:bold,stroke-width:2px
-    style P2R2 fill:transparent,stroke:#f59e0b,color:#1e293b,font-weight:bold,stroke-width:2px
-    style P2R3 fill:transparent,stroke:#ef4444,color:#1e293b,font-weight:bold,stroke-width:2px
-    style P3 fill:transparent,stroke:#eab308,color:#1e293b,font-weight:bold,stroke-width:2px
-    style Output fill:transparent,stroke:#22c55e,color:#1e293b,font-weight:bold,stroke-width:2px
-    style PDF fill:transparent,stroke:#3b82f6,color:#1e293b,font-weight:bold,stroke-width:2px
-    style DB fill:transparent,stroke:#10b981,color:#1e293b,font-weight:bold,stroke-width:2px
-    style SL fill:transparent,stroke:#ef4444,color:#1e293b,font-weight:bold,stroke-width:2px
-    style MEM fill:transparent,stroke:#8b5cf6,color:#1e293b,font-weight:bold,stroke-width:2px
+    style P1 fill:#eff6ff,stroke:#2563eb,color:#1e3a8a,font-weight:bold,stroke-width:3px
+    style P2R1 fill:#f0fdf4,stroke:#16a34a,color:#14532d,font-weight:bold,stroke-width:3px
+    style HITL fill:#fdf2f8,stroke:#db2777,color:#831843,font-weight:bold,stroke-width:3px
+    style P2R2 fill:#fffbeb,stroke:#d97706,color:#78350f,font-weight:bold,stroke-width:3px
+    style P2R3 fill:#fef2f2,stroke:#dc2626,color:#7f1d1d,font-weight:bold,stroke-width:3px
+    style P3 fill:#fefce8,stroke:#ca8a04,color:#713f12,font-weight:bold,stroke-width:3px
+    style Output fill:#f0fdf4,stroke:#16a34a,color:#14532d,font-weight:bold,stroke-width:3px
 ```
 
 ---
@@ -279,7 +290,7 @@ flowchart TD
 ## Data Flow Diagram
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '18px', 'fontFamily': 'Segoe UI, Arial', 'primaryTextColor': '#1e293b', 'lineColor': '#64748b' }}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '18px', 'fontFamily': 'Segoe UI, Arial', 'primaryTextColor': '#1e293b', 'lineColor': '#475569', 'edgeLabelBackground': '#f8fafc' }}}%%
 flowchart TD
     User(["USER BROWSER"]):::userClass
 
@@ -324,31 +335,31 @@ flowchart TD
     SaveMem --> SMem
     NotifySlk --> SlkHook["SLACK\nWEBHOOK"]:::slackClass
 
-    FE -->|"Human Feedback"| HInput["HUMAN-IN-THE-LOOP\nAPI"]:::hitlClass
+    FE -->|"Human Feedback"| HInput["HUMAN-IN-THE-LOOP\nAPI"]:::humanClass
     HInput --> Store
 
-    classDef userClass fill:#fff,stroke:#eab308,color:#eab308,font-weight:bold,font-size:18px,stroke-width:2px
-    classDef apiClass fill:#fff,stroke:#0ea5e9,color:#0ea5e9,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef supaClass fill:#fff,stroke:#10b981,color:#10b981,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef storeClass fill:#fff,stroke:#0ea5e9,color:#0ea5e9,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef validateClass fill:#fff,stroke:#eab308,color:#eab308,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef memClass fill:#fff,stroke:#818cf8,color:#818cf8,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef rejectClass fill:#fff,stroke:#ef4444,color:#ef4444,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef smemClass fill:#fff,stroke:#8b5cf6,color:#8b5cf6,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef streamClass fill:#fff,stroke:#818cf8,color:#818cf8,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef crewClass fill:#fff,stroke:#eab308,color:#eab308,font-weight:bold,font-size:18px,stroke-width:2px
-    classDef gemClass fill:#fff,stroke:#3b82f6,color:#3b82f6,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef srpClass fill:#fff,stroke:#22c55e,color:#22c55e,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef feClass fill:#fff,stroke:#eab308,color:#eab308,font-weight:bold,font-size:18px,stroke-width:2px
-    classDef postClass fill:#fff,stroke:#22c55e,color:#22c55e,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef outClass fill:#fff,stroke:#22c55e,color:#22c55e,font-weight:bold,font-size:15px,stroke-width:2px
-    classDef outPdfClass fill:#fff,stroke:#3b82f6,color:#3b82f6,font-weight:bold,font-size:15px,stroke-width:2px
-    classDef outSupaClass fill:#fff,stroke:#10b981,color:#10b981,font-weight:bold,font-size:15px,stroke-width:2px
-    classDef outMemClass fill:#fff,stroke:#8b5cf6,color:#8b5cf6,font-weight:bold,font-size:15px,stroke-width:2px
-    classDef outSlackClass fill:#fff,stroke:#ef4444,color:#ef4444,font-weight:bold,font-size:15px,stroke-width:2px
-    classDef oaiClass fill:#fff,stroke:#6366f1,color:#6366f1,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef slackClass fill:#fff,stroke:#ef4444,color:#ef4444,font-weight:bold,font-size:16px,stroke-width:2px
-    classDef hitlClass fill:#fff,stroke:#ec4899,color:#ec4899,font-weight:bold,font-size:16px,stroke-width:2px
+    classDef userClass fill:#fef3c7,stroke:#b45309,color:#78350f,font-weight:bold,font-size:18px,stroke-width:3px
+    classDef apiClass fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,font-weight:bold,font-size:16px,stroke-width:2.5px
+    classDef supaClass fill:#a7f3d0,stroke:#059669,color:#064e3b,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef storeClass fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,font-weight:bold,font-size:16px,stroke-width:2.5px
+    classDef validateClass fill:#fef9c3,stroke:#ca8a04,color:#713f12,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef memClass fill:#e0e7ff,stroke:#4f46e5,color:#312e81,font-weight:bold,font-size:16px,stroke-width:2.5px
+    classDef rejectClass fill:#fecaca,stroke:#dc2626,color:#7f1d1d,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef smemClass fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef streamClass fill:#c7d2fe,stroke:#4f46e5,color:#312e81,font-weight:bold,font-size:16px,stroke-width:2.5px
+    classDef crewClass fill:#fef3c7,stroke:#b45309,color:#78350f,font-weight:bold,font-size:18px,stroke-width:3px
+    classDef gemClass fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef srpClass fill:#bbf7d0,stroke:#16a34a,color:#14532d,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef feClass fill:#fef3c7,stroke:#b45309,color:#78350f,font-weight:bold,font-size:18px,stroke-width:3px
+    classDef postClass fill:#d1fae5,stroke:#059669,color:#064e3b,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef outClass fill:#dcfce7,stroke:#16a34a,color:#14532d,font-weight:bold,font-size:15px,stroke-width:2.5px
+    classDef outPdfClass fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,font-weight:bold,font-size:15px,stroke-width:2.5px
+    classDef outSupaClass fill:#a7f3d0,stroke:#059669,color:#064e3b,font-weight:bold,font-size:15px,stroke-width:2.5px
+    classDef outMemClass fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95,font-weight:bold,font-size:15px,stroke-width:2.5px
+    classDef outSlackClass fill:#fecaca,stroke:#dc2626,color:#7f1d1d,font-weight:bold,font-size:15px,stroke-width:2.5px
+    classDef oaiClass fill:#c7d2fe,stroke:#4f46e5,color:#312e81,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef slackClass fill:#fecaca,stroke:#dc2626,color:#7f1d1d,font-weight:bold,font-size:16px,stroke-width:3px
+    classDef humanClass fill:#fce7f3,stroke:#db2777,color:#831843,font-weight:bold,font-size:16px,stroke-width:3px
 ```
 
 ---
