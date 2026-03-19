@@ -267,7 +267,7 @@ flowchart TD
 ## Data Flow Diagram
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Inter, system-ui, sans-serif', 'primaryTextColor': '#111827', 'lineColor': '#94a3b8', 'edgeLabelBackground': '#ffffff' }}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '18px', 'fontFamily': 'Inter, system-ui, sans-serif', 'primaryTextColor': '#111827', 'lineColor': '#94a3b8', 'edgeLabelBackground': '#ffffff' }}}%%
 flowchart TD
     subgraph UserLayer["USER"]
         User(["USER BROWSER"]):::accent
