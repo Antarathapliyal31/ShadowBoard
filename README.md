@@ -144,63 +144,6 @@ graph TB
 
 ---
 
-## Agent Architecture
-
-```mermaid
-graph TB
-    subgraph BoardPresets["Board Presets"]
-        direction LR
-        Tech["Tech"]
-        Health["Healthcare"]
-        Finance["Finance"]
-        Retail["Retail"]
-    end
-
-    BoardPresets -->|"Customize Expertise"| AgentPanel
-
-    subgraph AgentPanel["AI Executive Panel (CrewAI)"]
-        direction TB
-
-        subgraph Researchers["Phase 1: Research Team"]
-            direction LR
-            CFO["CFO\nFinance & ROI\nCost Analysis\nRevenue Projections"]
-            CMO["CMO\nMarket Demand\nCompetition\nCustomer Insights"]
-            Legal["Legal Counsel\nCompliance\nRegulatory Risk\nIP & Contracts"]
-        end
-
-        DA["Devil's Advocate\nChallenges ALL Assumptions\nCounter-Evidence\nStress Tests Arguments"]
-
-        Moderator["Moderator\nSynthesizes Debate\nWeighs Evidence\nExecutive Recommendation\nStrategy Brief PDF"]
-    end
-
-    CFO --> DA
-    CMO --> DA
-    Legal --> DA
-    DA --> Moderator
-
-    Moderator -->|"GO"| Go["GO"]
-    Moderator -->|"NO-GO"| NoGo["NO-GO"]
-    Moderator -->|"CONDITIONAL"| Cond["CONDITIONAL"]
-
-    style BoardPresets fill:#2d2d2d,stroke:#e6c200,color:#fff
-    style AgentPanel fill:#1a1a2e,stroke:#e6c200,color:#fff
-    style Researchers fill:#16213e,stroke:#4a9eff,color:#fff
-    style CFO fill:#3b82f6,stroke:#fff,color:#fff
-    style CMO fill:#22c55e,stroke:#fff,color:#fff
-    style Legal fill:#8b5cf6,stroke:#fff,color:#fff
-    style DA fill:#ef4444,stroke:#fff,color:#fff
-    style Moderator fill:#e6c200,stroke:#000,color:#000
-    style Go fill:#22c55e,stroke:#fff,color:#fff
-    style NoGo fill:#ef4444,stroke:#fff,color:#fff
-    style Cond fill:#f59e0b,stroke:#fff,color:#fff
-    style Tech fill:#3b82f6,stroke:#fff,color:#fff
-    style Health fill:#ec4899,stroke:#fff,color:#fff
-    style Finance fill:#22c55e,stroke:#fff,color:#fff
-    style Retail fill:#f97316,stroke:#fff,color:#fff
-```
-
----
-
 ## Debate Flow & Phases
 
 ```mermaid
@@ -294,120 +237,75 @@ flowchart TD
 ## Data Flow Diagram
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '18px', 'fontFamily': 'Segoe UI, Arial', 'primaryColor': '#1e3a5f', 'primaryTextColor': '#ffffff', 'lineColor': '#e6c200', 'secondaryColor': '#16213e', 'tertiaryColor': '#0f3460' }}}%%
 flowchart TD
-    User["User Browser"] -->|"Login / Signup"| AuthAPI["POST /api/auth/*"]
-    User -->|"Submit Question"| SessionAPI["POST /api/session/create"]
-    User -->|"Upload File"| UploadAPI["POST /api/{id}/upload"]
-    User -->|"Voice Input"| WhisperAPI["POST /api/speech-to-text"]
+    User(["USER BROWSER"]):::userClass
 
-    AuthAPI --> Supabase[(Supabase\nPostgreSQL)]
-    SessionAPI --> SessionStore["Session Store\n(In-Memory)"]
+    User -->|"Login / Signup"| AuthAPI["AUTH API"]:::apiClass
+    User -->|"Submit Question"| SessionAPI["SESSION API"]:::apiClass
+    User -->|"Upload Documents"| UploadAPI["UPLOAD API"]:::apiClass
+    User -->|"Voice Input"| SpeechAPI["SPEECH-TO-TEXT"]:::apiClass
 
-    SessionStore --> Validate{"Input Validation\n& Prompt Injection\nDetection"}
+    AuthAPI --> SupaDB[("SUPABASE\nPOSTGRESQL")]:::supaClass
+    SessionAPI --> Store["SESSION STORE"]:::storeClass
 
-    Validate -->|"Pass"| MemoryCheck["Retrieve Past\nDecisions"]
-    Validate -->|"Fail"| Reject["Reject Request"]
+    Store --> Valid{"INPUT VALIDATION\n& INJECTION CHECK"}:::validateClass
 
-    MemoryCheck <-->|"Query / Response"| SuperMem[(Supermemory\nAPI)]
+    Valid -->|"PASS"| MemCheck["RETRIEVE PAST\nDECISIONS"]:::memClass
+    Valid -->|"FAIL"| Denied["REJECTED"]:::rejectClass
 
-    MemoryCheck --> SSE["SSE Stream\n/api/{id}/agents_research"]
+    MemCheck -->|"Query"| SMem[("SUPERMEMORY")]:::smemClass
+    SMem -->|"Past Decisions"| MemCheck
 
-    SSE --> CrewAI["CrewAI Agent\nExecution"]
+    MemCheck --> Stream["SSE STREAM\nENDPOINT"]:::streamClass
+    Stream --> Crew["CREWAI AGENT\nEXECUTION"]:::crewClass
 
-    CrewAI <-->|"LLM Calls"| Gemini["Google Gemini\n2.5 Flash"]
-    CrewAI <-->|"Web Search"| Serper["Serper API"]
+    Crew -->|"LLM Calls"| Gem["GOOGLE GEMINI\n2.5 FLASH"]:::gemClass
+    Gem -->|"Response"| Crew
+    Crew -->|"Web Search"| Srp["SERPER\nSEARCH"]:::srpClass
+    Srp -->|"Results"| Crew
 
-    CrewAI -->|"Real-time\nMessages"| Frontend["Frontend\n(Live Debate UI)"]
+    Crew -->|"Real-time Messages"| FE["FRONTEND\nLIVE DEBATE UI"]:::feClass
 
-    CrewAI --> PostDebate["Post-Debate Pipeline"]
+    Crew --> Post["POST-DEBATE\nPIPELINE"]:::postClass
 
-    PostDebate --> ParseVotes["Parse Votes\n(GO / NO-GO / CONDITIONAL)"]
-    PostDebate --> GenPDF["Generate PDF\nStrategy Brief"]
-    PostDebate --> SaveSession["Save to\nSupabase"]
-    PostDebate --> SaveMemory["Save to\nSupermemory"]
-    PostDebate --> NotifySlack["Notify\nSlack"]
+    Post --> Votes["PARSE VOTES\nGO / NO-GO / CONDITIONAL"]:::outClass
+    Post --> GenPDF["GENERATE PDF\nSTRATEGY BRIEF"]:::outClass
+    Post --> SaveDB["SAVE TO\nSUPABASE"]:::outSupaClass
+    Post --> SaveMem["SAVE TO\nSUPERMEMORY"]:::outMemClass
+    Post --> NotifySlk["NOTIFY VIA\nSLACK"]:::outSlackClass
 
-    WhisperAPI --> OpenAI["OpenAI\nWhisper API"]
-    OpenAI -->|"Transcription"| Frontend
+    SpeechAPI --> OAI["OPENAI\nWHISPER"]:::oaiClass
+    OAI -->|"Transcription"| FE
 
-    SaveSession --> Supabase
-    SaveMemory --> SuperMem
-    NotifySlack --> SlackWH["Slack\nWebhook"]
+    SaveDB --> SupaDB
+    SaveMem --> SMem
+    NotifySlk --> SlkHook["SLACK\nWEBHOOK"]:::slackClass
 
-    Frontend -->|"HITL Input"| HITLAPI["POST /api/{id}/human_input"]
-    HITLAPI --> SessionStore
+    FE -->|"Human Feedback"| HInput["HUMAN-IN-THE-LOOP\nAPI"]:::hitlClass
+    HInput --> Store
 
-    style User fill:#e6c200,stroke:#000,color:#000
-    style Supabase fill:#3ecf8e,stroke:#fff,color:#fff
-    style SuperMem fill:#8b5cf6,stroke:#fff,color:#fff
-    style Gemini fill:#4285F4,stroke:#fff,color:#fff
-    style Serper fill:#22c55e,stroke:#fff,color:#fff
-    style OpenAI fill:#412991,stroke:#fff,color:#fff
-    style SlackWH fill:#e01e5a,stroke:#fff,color:#fff
-    style Frontend fill:#1a1a2e,stroke:#e6c200,color:#fff
-    style CrewAI fill:#0f3460,stroke:#e6c200,color:#fff
-    style Validate fill:#f59e0b,stroke:#000,color:#000
-    style Reject fill:#ef4444,stroke:#fff,color:#fff
-    style PostDebate fill:#16213e,stroke:#22c55e,color:#fff
-```
-
----
-
-## Technology Stack Overview
-
-```mermaid
-graph LR
-    subgraph FE["Frontend"]
-        direction TB
-        React["React 18"]
-        TS["TypeScript"]
-        Vite["Vite"]
-        Tailwind["Tailwind CSS"]
-        Shadcn["shadcn/ui"]
-        Framer["Framer Motion"]
-        RRouter["React Router"]
-        TanStack["TanStack Query"]
-        RHF["React Hook Form"]
-        Zod["Zod"]
-        RMarkdown["React Markdown"]
-        Recharts["Recharts"]
-    end
-
-    subgraph BE["Backend"]
-        direction TB
-        FastAPI["FastAPI"]
-        CrewAI["CrewAI"]
-        Uvicorn["Uvicorn"]
-        Pydantic["Pydantic"]
-        FPDF["fpdf2"]
-        PyMuPDF["PyMuPDF"]
-        Docx["python-docx"]
-    end
-
-    subgraph APIs["Cloud APIs"]
-        direction TB
-        GeminiAPI["Google Gemini"]
-        SerperAPI["Serper Search"]
-        SupabaseAPI["Supabase"]
-        SupermemAPI["Supermemory"]
-        WhisperAPI["OpenAI Whisper"]
-        SlackAPI["Slack Webhooks"]
-        AiriaAPI["AIRIA Platform"]
-    end
-
-    subgraph Deploy["Deployment"]
-        direction TB
-        Render["Render"]
-    end
-
-    FE <-->|"HTTP / SSE"| BE
-    BE <--> APIs
-    BE --> Deploy
-
-    style FE fill:#1a1a2e,stroke:#61DAFB,color:#fff
-    style BE fill:#1a1a2e,stroke:#009688,color:#fff
-    style APIs fill:#1a1a2e,stroke:#e6c200,color:#fff
-    style Deploy fill:#1a1a2e,stroke:#22c55e,color:#fff
+    classDef userClass fill:#e6c200,stroke:#000,color:#000,font-weight:bold,font-size:16px,rx:20
+    classDef apiClass fill:#1e3a5f,stroke:#3b82f6,color:#fff,font-weight:bold,font-size:14px
+    classDef supaClass fill:#3ecf8e,stroke:#fff,color:#fff,font-weight:bold,font-size:14px
+    classDef storeClass fill:#1e3a5f,stroke:#3b82f6,color:#fff,font-weight:bold,font-size:14px
+    classDef validateClass fill:#f59e0b,stroke:#000,color:#000,font-weight:bold,font-size:14px
+    classDef memClass fill:#1e3a5f,stroke:#8b5cf6,color:#fff,font-weight:bold,font-size:14px
+    classDef rejectClass fill:#ef4444,stroke:#fff,color:#fff,font-weight:bold,font-size:14px
+    classDef smemClass fill:#8b5cf6,stroke:#fff,color:#fff,font-weight:bold,font-size:14px
+    classDef streamClass fill:#1e3a5f,stroke:#e6c200,color:#fff,font-weight:bold,font-size:14px
+    classDef crewClass fill:#0f3460,stroke:#e6c200,color:#fff,font-weight:bold,font-size:16px
+    classDef gemClass fill:#4285F4,stroke:#fff,color:#fff,font-weight:bold,font-size:14px
+    classDef srpClass fill:#22c55e,stroke:#fff,color:#fff,font-weight:bold,font-size:14px
+    classDef feClass fill:#1a1a2e,stroke:#e6c200,color:#e6c200,font-weight:bold,font-size:16px
+    classDef postClass fill:#16213e,stroke:#22c55e,color:#fff,font-weight:bold,font-size:14px
+    classDef outClass fill:#22c55e,stroke:#fff,color:#fff,font-weight:bold,font-size:13px
+    classDef outSupaClass fill:#3ecf8e,stroke:#fff,color:#fff,font-weight:bold,font-size:13px
+    classDef outMemClass fill:#8b5cf6,stroke:#fff,color:#fff,font-weight:bold,font-size:13px
+    classDef outSlackClass fill:#e01e5a,stroke:#fff,color:#fff,font-weight:bold,font-size:13px
+    classDef oaiClass fill:#412991,stroke:#fff,color:#fff,font-weight:bold,font-size:14px
+    classDef slackClass fill:#e01e5a,stroke:#fff,color:#fff,font-weight:bold,font-size:14px
+    classDef hitlClass fill:#4a1942,stroke:#e6c200,color:#e6c200,font-weight:bold,font-size:14px
 ```
 
 ---
