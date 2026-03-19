@@ -144,6 +144,44 @@ graph TB
 
 ---
 
+## Agent Architecture — Example
+
+> **Scenario:** *"Should Spotify acquire a podcast analytics company?"*
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '15px', 'fontFamily': 'Segoe UI, Arial', 'primaryTextColor': '#fff' }}}%%
+flowchart LR
+    Q(["Should Spotify acquire\na podcast analytics company?"]):::qClass
+
+    Q --> CFO["CFO\n$4.2B cash · $150-400M target\nROI & margin impact"]:::cfoClass
+    Q --> CMO["CMO\n30% market share · YouTube threat\nAd revenue growth"]:::cmoClass
+    Q --> LEG["Legal\nAntitrust risk · data privacy\nPast acquisition scrutiny"]:::legClass
+
+    CFO --> DA["Devil's Advocate\n$1B spent on podcasts already\nROI questioned since 2022"]:::daClass
+    CMO --> DA
+    LEG --> DA
+
+    DA --> MOD["Moderator\nSynthesizes all positions\nStrategy Brief PDF"]:::modClass
+
+    MOD --> V{"BOARD VOTE"}:::voteClass
+    V -->|"CFO"| GO["GO"]:::goClass
+    V -->|"CMO"| COND["CONDITIONAL"]:::condClass
+    V -->|"Legal"| NOGO["NO-GO"]:::nogoClass
+
+    classDef qClass fill:#e6c200,stroke:#000,color:#000,font-weight:bold
+    classDef cfoClass fill:#3b82f6,stroke:#fff,color:#fff,font-weight:bold
+    classDef cmoClass fill:#22c55e,stroke:#fff,color:#fff,font-weight:bold
+    classDef legClass fill:#8b5cf6,stroke:#fff,color:#fff,font-weight:bold
+    classDef daClass fill:#ef4444,stroke:#fff,color:#fff,font-weight:bold
+    classDef modClass fill:#1a1a2e,stroke:#e6c200,color:#e6c200,font-weight:bold
+    classDef voteClass fill:#1e3a5f,stroke:#e6c200,color:#fff,font-weight:bold
+    classDef goClass fill:#22c55e,stroke:#fff,color:#fff,font-weight:bold
+    classDef condClass fill:#f59e0b,stroke:#fff,color:#fff,font-weight:bold
+    classDef nogoClass fill:#ef4444,stroke:#fff,color:#fff,font-weight:bold
+```
+
+---
+
 ## Debate Flow & Phases
 
 ```mermaid
